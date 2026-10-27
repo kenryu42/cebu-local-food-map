@@ -245,7 +245,9 @@ function overviewCamera(): maplibregl.CameraOptions {
   if (visible.length === 0 || activeArea !== 'cebu-city') bounds.extend([jpark.lng, jpark.lat]);
   const pitch = is3D ? HOME.pitch : 0;
   const bearing = is3D ? HOME.bearing : 0;
-  const camera = map.cameraForBounds(bounds, { padding: cameraPadding(), pitch, bearing, maxZoom: 14.5 });
+  // absolutePadding: replace the padding the last spot selection left on the map instead of adding
+  // to it; stacked, the two overflow a phone screen and the camera never moves
+  const camera = map.cameraForBounds(bounds, { padding: cameraPadding(), absolutePadding: true, pitch, bearing, maxZoom: 14.5 });
   return { ...camera, pitch, bearing };
 }
 
