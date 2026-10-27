@@ -510,10 +510,12 @@ async function selectPlace(id: string) {
     center: [place.lng, place.lat],
     zoom: 16.2,
     pitch: is3D ? 62 : 0,
-    bearing: is3D ? map.getBearing() - 40 : 0,
+    // Keep the heading: turning on the way in read as the map spinning before the card showed
+    bearing: is3D ? map.getBearing() : 0,
     // Extra headroom on phones so the popup above the pin clears the map buttons
     padding: mobileQuery.matches ? { ...cameraPadding(), top: 330 } : cameraPadding(),
-    duration: 2600,
+    // The card waits for the landing, so keep the flight short
+    duration: 1200,
     curve: 1.4,
     essential: true
   });
