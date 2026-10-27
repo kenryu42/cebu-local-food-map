@@ -89,11 +89,15 @@ function cameraPadding(): maplibregl.PaddingOptions {
 }
 
 function flyAndWait(options: maplibregl.FlyToOptions & { padding?: maplibregl.PaddingOptions }): Promise<void> {
-  return new Promise(resolve => {
-    map.once('moveend', () => resolve());
-    if (reducedMotion) map.jumpTo(options);
-    else map.flyTo(options);
-  });
+  if (reducedMotion) {
+    map.jumpTo(options);
+    return Promise.resolve();
+  }
+  // Start the flight before listening: starting it ends any flight in progress, and that
+  // flight's moveend must not count as this one landing
+  map.flyTo(options);
+  if (!map.isMoving()) return Promise.resolve(); // nothing to animate, so it already landed
+  return new Promise(resolve => map.once('moveend', () => resolve()));
 }
 
 // Initialize map
