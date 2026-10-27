@@ -9,7 +9,7 @@
 |---|----------|-----|-----|-------------|---------------|
 | **LANDMARKS** |
 | 1 | Mactan-Cebu International Airport | 10.3103 | 123.9793 | OSM | Madrid Street, Aldea del Sol, Soong 1, Bankal |
-| 2 | J Park Island Resort & Waterpark | 10.2848 | 123.9974 | OSM | Maribago area (City by the Sea Hotel vicinity) |
+| 2 | J Park Island Resort & Waterpark | 10.28276 | 123.99551 | OSM | OSM node "JPark resort", M.L. Quezon Highway, Maribago |
 | **MACTAN ISLAND** |
 | 3 | AA BBQ Soong | 10.296545 | 124.001135 | Business Listing | Exa.ai/Waze: M.L. Quezon National Highway, Soong 1, Maribago |
 | 4 | Ayer's Lechon (Mactan Newtown) | 10.3085 | 124.0130 | OSM | Mactan Newtown complex |

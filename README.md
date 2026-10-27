@@ -1,6 +1,6 @@
-# 宿務在地美食 3D 地圖
+# 宿務在地美食・景點 3D 地圖
 
-Interactive 3D map of authentic local eateries in Cebu, Philippines, for a 42-person Japanese company trip (Oct 28 - Nov 1, 2026) staying at J Park Island Resort & Waterpark, Mactan.
+Interactive 3D map of authentic local eateries and sightseeing spots in Cebu, Philippines, for a 42-person Japanese company trip (Oct 28 - Nov 1, 2026) staying at J Park Island Resort & Waterpark, Mactan.
 
 **Live Site:** https://kenryu42.github.io/cebu-local-food-map/
 
@@ -8,23 +8,30 @@ Interactive 3D map of authentic local eateries in Cebu, Philippines, for a 42-pe
 
 - **Interactive 3D Map** with MapLibre GL JS
   - Tilted 3D view with terrain and building extrusions
-  - Free tile source (OpenStreetMap) - no API keys required
+  - Free vector tiles (OpenFreeMap) - no API keys required
   - Touch-optimized for mobile devices
+  - One-time Japan → Cebu globe intro, 🎲 random picker, and auto tour
 
-- **16 Verified Locations**
-  - Mactan Island: 6 restaurants + J Park Resort
-  - Cebu City: 6 restaurants
-  - Plus MCIA Airport marker
+- **Food & Sightseeing Modes (🍴 美食 / 📸 景點)**
+  - 14 eateries and markets, 9 sightseeing spots, plus J Park and MCIA markers
+  - Food categories: Lechon, BBQ, Puso, Ngohiong/Siomai, Market
+  - Sight categories: History, Churches & Temples, Viewpoints
 
 - **Smart Filters**
   - Area: Mactan / Cebu City
-  - Category: Lechon, BBQ, Puso, Ngohiong/Siomai, Market
+  - Category chips with counts
+  - Sort by area or by distance from you (📍 離我最近)
 
 - **Detailed Information**
   - Recommended dishes (Traditional Chinese)
   - Distance from J Park
-  - Operating hours
+  - Operating hours, with a 營業中 / 即將打烊 / 休息中 badge (Cebu time) where hours are reliable
+  - Prices and entry fees in pesos with the yen equivalent
   - Direct Google Maps navigation links
+  - 🔗 Share a spot: links (`#place=<id>`) open straight to that spot
+  - 🏨 Hotel card to show drivers, plus 911 and the Consulate General of Japan in Cebu
+  - ₱ ⇄ ¥ converter (live rate, cached for offline use)
+  - Cebuano phrases
   - Local dish glossary
   - Street food safety tips
   - Undas holiday traffic warning
@@ -103,7 +110,20 @@ All locations geocoded using OpenStreetMap Nominatim API (Oct 27, 2026):
 - Mactan Newtown: 10.3085, 124.0130
 - Pusok area: 10.3245, 123.9743
 - Puso Village: 10.2913, 123.9016
-- Maribago area (J Park vicinity): 10.2848, 123.9974
+- JPark Island Resort & Waterpark: 10.28276, 123.99551 (OSM node "JPark resort")
+
+### Sightseeing (Exact OSM Match)
+- Magellan's Cross: 10.2935702, 123.9019584
+- Basilica del Santo Niño: 10.2943421, 123.9021033
+- Fort San Pedro: 10.2927283, 123.9058911
+- Yap-San Diego Ancestral House: 10.2992579, 123.9039722
+- Heritage of Cebu Monument: 10.2988934, 123.9036170
+- Mactan Shrine (Liberty Shrine): 10.3109738, 124.0151380
+- Temple of Leah: 10.3688795, 123.8733158
+- Cebu Taoist Temple: 10.3343184, 123.8879852
+- Sirao Flower Garden: 10.4070429, 123.8665474
+
+Sightseeing hours and entry fees differ between sources, so they are shown as approximate and marked 需確認.
 
 ### Approximate Coordinates (Area-Based)
 These restaurants are not in the OSM database. Coordinates use nearby landmarks or area centers:
@@ -115,6 +135,14 @@ These restaurants are not in the OSM database. Coordinates use nearby landmarks 
 - Way Tugpahay Siomai: 10.295, 123.895 (Tisa/Katipunan area)
 
 **Note:** Approximate coordinates are flagged with ⚠️ in popups. Use the Google Maps link for turn-by-turn navigation.
+
+## Tests
+
+```bash
+npm test
+```
+
+Runs the trip logic tests (opening status in Cebu time, peso/yen prices, share links, distance sorting) with Node's built-in test runner.
 
 ## Data Sources
 

@@ -5,7 +5,8 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 // dev prebundle nor the production build preserves, so ship it as an asset.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import type { Feature, LineString } from 'geojson';
-import { places, glossary, streetFoodTips, sources, type Place, type Category, type Area } from './data';
+import { places, glossary, phrases, streetFoodTips, sources, type Place, type Category, type Area } from './data';
+import { openStatus, formatPrice, shareUrl, placeIdFromHash, distanceKm, sortByDistance, type OpenStatus } from './trip';
 
 const CATEGORY_META: Record<Category, { label: string; emoji: string; color: string }> = {
   'lechon': { label: 'Lechon 烤乳豬', emoji: '🐷', color: '#e8432e' },
@@ -13,11 +14,30 @@ const CATEGORY_META: Record<Category, { label: string; emoji: string; color: str
   'puso': { label: 'Puso 椰葉飯', emoji: '🍚', color: '#2f9e44' },
   'ngohiong-siomai': { label: 'Ngohiong/Siomai', emoji: '🥟', color: '#c2850c' },
   'market': { label: '市場', emoji: '🏪', color: '#7048e8' },
+  'history': { label: '歷史古蹟', emoji: '🏛️', color: '#a0522d' },
+  'temple': { label: '教堂寺廟', emoji: '⛪', color: '#1c7ed6' },
+  'viewpoint': { label: '山景拍照', emoji: '🌄', color: '#d6336c' },
   'lodging': { label: '住宿', emoji: '🏨', color: '#0c8599' },
   'airport': { label: '機場', emoji: '✈️', color: '#495057' }
 };
-const FOOD_CATEGORIES: Category[] = ['lechon', 'bbq', 'puso', 'ngohiong-siomai', 'market'];
-const BURST_EMOJI = ['🐷', '🍢', '🍚', '🥟', '🦐', '🥥', '🥭', '🔥', '🌴', '✨'];
+type Mode = 'food' | 'sight';
+const MODES: Record<Mode, { categories: Category[]; pick: string; tour: string; empty: string; burst: string[] }> = {
+  food: {
+    categories: ['lechon', 'bbq', 'puso', 'ngohiong-siomai', 'market'],
+    pick: '今晚吃什麼？',
+    tour: '美食巡禮',
+    empty: '沒有符合的店家，換個篩選試試 🍽️',
+    burst: ['🐷', '🍢', '🍚', '🥟', '🦐', '🥥', '🥭', '🔥', '🌴', '✨']
+  },
+  sight: {
+    categories: ['history', 'temple', 'viewpoint'],
+    pick: '去哪裡玩？',
+    tour: '景點巡禮',
+    empty: '沒有符合的景點，換個篩選試試 📸',
+    burst: ['⛪', '🏛️', '🌄', '🌺', '📸', '🌴', '🗿', '✨']
+  }
+};
+const OPEN_LABEL: Record<OpenStatus, string> = { 'open': '營業中', 'closing-soon': '即將打烊', 'closed': '休息中' };
 
 const JAPAN: [number, number] = [139.7, 35.68];
 const HOME = { pitch: 50, bearing: -12 };
@@ -33,7 +53,18 @@ const slowNetwork = Boolean(connection?.saveData) || /2g/.test(connection?.effec
 function introSeen(): boolean {
   try { return localStorage.getItem(INTRO_SEEN_KEY) === '1'; } catch { return false; }
 }
-const playFlight = !reducedMotion && !slowNetwork && !introSeen() && !new URLSearchParams(location.search).has('skip-intro');
+// A shared link (#place=…) goes straight to that place instead of playing the intro
+const sharedPlaceId = placeIdFromHash(location.hash, places.map(p => p.id));
+const playFlight = !sharedPlaceId && !reducedMotion && !slowNetwork && !introSeen() && !new URLSearchParams(location.search).has('skip-intro');
+
+// PHP→JPY rate on 2026-10-27 (open.er-api.com); replaced by a newer cached or live rate
+const RATE_KEY = 'cebu-food-map:php-jpy';
+interface Rate { value: number; date: string }
+let rate: Rate = { value: 2.463, date: '2026-10-27' };
+try {
+  const cached = JSON.parse(localStorage.getItem(RATE_KEY) ?? 'null') as Rate | null;
+  if (cached && cached.date > rate.date) rate = cached;
+} catch { /* no storage: keep the built-in rate */ }
 
 maplibregl.setWorkerUrl(workerUrl);
 
@@ -41,6 +72,7 @@ maplibregl.setWorkerUrl(workerUrl);
 let map: maplibregl.Map;
 const markers = new Map<string, maplibregl.Marker>();
 const popup = new maplibregl.Popup({ offset: [0, -46], maxWidth: '300px', focusAfterOpen: false });
+let mode: Mode = 'food';
 let activeArea: Area | 'all' = 'all';
 const activeCategories = new Set<Category>();
 let activeId: string | null = null;
@@ -48,26 +80,43 @@ let is3D = true;
 let selection = 0; // bumps on every new selection so stale flights don't open popups
 let orbitFrame = 0;
 let tourRunning = false;
+let sortMode: 'area' | 'near' = 'area';
+let userPos: { lat: number; lng: number } | null = null;
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
 const primary = (place: Place) => CATEGORY_META[place.categories[0]];
-const isFood = (place: Place) => place.area !== 'landmark';
+const isSpot = (place: Place) => place.area !== 'landmark';
+const modeOf = (place: Place): Mode => place.categories.some(c => MODES.sight.categories.includes(c)) ? 'sight' : 'food';
+// Landmarks (hotel, airport) show in both modes
+const inMode = (place: Place) => !isSpot(place) || modeOf(place) === mode;
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const distanceFromJpark = (place: Place) => distanceKm(jpark, place);
 
-// Calculate distance between two coordinates (km)
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Earth's radius in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a =
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
+let toastTimer = 0;
+function toast(message: string) {
+  const el = $('#toast');
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => el.classList.remove('show'), 2400);
 }
 
-const distanceFromJpark = (place: Place) => calculateDistance(jpark.lat, jpark.lng, place.lat, place.lng);
+function openBadge(place: Place): string {
+  if (!place.openHours) return '';
+  const status = openStatus(place.openHours, new Date());
+  return `<span class="open-badge ${status}" data-open-id="${place.id}">${OPEN_LABEL[status]}</span>`;
+}
+
+// Badges go stale as the clock moves; update them in place without re-rendering the list
+function refreshOpenBadges() {
+  document.querySelectorAll<HTMLElement>('[data-open-id]').forEach(el => {
+    const place = places.find(p => p.id === el.dataset.openId);
+    if (!place?.openHours) return;
+    const status = openStatus(place.openHours, new Date());
+    el.className = `open-badge ${status}`;
+    el.textContent = OPEN_LABEL[status];
+  });
+}
 
 type SheetState = 'peek' | 'half' | 'full';
 let sheetState: SheetState = 'half';
@@ -132,7 +181,12 @@ function initMap() {
 
   // Phones pinch to zoom; the compass alone is enough to reset rotation there
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true, showZoom: !mobileQuery.matches }), 'top-right');
-  map.addControl(new maplibregl.GeolocateControl({ trackUserLocation: true }), 'top-right');
+  const geolocate = new maplibregl.GeolocateControl({ trackUserLocation: true });
+  geolocate.on('geolocate', ({ coords }) => {
+    userPos = { lat: coords.latitude, lng: coords.longitude };
+    if (sortMode === 'near') updateList();
+  });
+  map.addControl(geolocate, 'top-right');
   // Top corner, because the bottom sheet covers the bottom of the map on phones
   map.addControl(new maplibregl.AttributionControl({ compact: true }), 'top-right');
   
@@ -185,7 +239,7 @@ function initMap() {
 
 // Camera that frames every visible spot (plus J Park) on this screen size
 function overviewCamera(): maplibregl.CameraOptions {
-  const visible = getFilteredPlaces().filter(isFood);
+  const visible = getFilteredPlaces().filter(isSpot);
   const bounds = new maplibregl.LngLatBounds();
   visible.forEach(p => bounds.extend([p.lng, p.lat]));
   if (visible.length === 0 || activeArea !== 'cebu-city') bounds.extend([jpark.lng, jpark.lat]);
@@ -222,7 +276,11 @@ async function playIntro() {
 }
 
 function finishIntro() {
-  try { localStorage.setItem(INTRO_SEEN_KEY, '1'); } catch { /* private mode: replay next time */ }
+  // Only a flight that actually played counts as seen; a shared link or reduced motion skips it
+  // without spending the one-time intro
+  if (playFlight) {
+    try { localStorage.setItem(INTRO_SEEN_KEY, '1'); } catch { /* private mode: replay next time */ }
+  }
   $('#intro').classList.add('done');
   document.body.classList.add('ready');
   // The globe is only for the flight in; terrain doesn't support it, so go flat before adding terrain
@@ -230,6 +288,7 @@ function finishIntro() {
   map.setTerrain({ source: 'terrain-source', exaggeration: 1.3 });
   clearRoute();
   updateMarkers();
+  if (sharedPlaceId) selectPlace(sharedPlaceId);
 }
 
 // ---------- Route arc from J Park ----------
@@ -350,18 +409,53 @@ function createPopupContent(place: Place): string {
     .map(c => `<span class="tag" style="--c:${CATEGORY_META[c].color}">${CATEGORY_META[c].emoji} ${CATEGORY_META[c].label}</span>`)
     .join('');
   const distance = place.id === 'jpark' ? '' : `<p class="info">📍 距離 J Park ${distanceFromJpark(place).toFixed(1)} km${place.distance ? `（${place.distance}）` : ''}</p>`;
+  const fromYou = userPos ? `<p class="info">🚶 離你 ${distanceKm(userPos, place).toFixed(1)} km</p>` : '';
 
   return `
     <div class="popup-content">
       <div class="tags">${tags}</div>
-      <h3>${place.name}</h3>
+      <h3>${place.name} ${openBadge(place)}</h3>
       ${place.recommended ? `<p class="recommended">${place.recommended}</p>` : ''}
       ${place.hours ? `<p class="info">⏰ ${place.hours}</p>` : ''}
+      ${place.price ? `<p class="info">💰 ${formatPrice(place.price, rate.value)}</p>` : ''}
       ${distance}
-      <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="maps-link">🧭 Google Maps 導航</a>
+      ${fromYou}
+      <div class="popup-actions">
+        <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="maps-link">🧭 Google Maps 導航</a>
+        <button class="share-btn" aria-label="分享這個地點">🔗 分享</button>
+      </div>
       ${place.coordinateSource === 'approximate' ? `<p class="coord-note">⚠️ 座標為區域參考位置</p>` : ''}
     </div>
   `;
+}
+
+function showPopup(place: Place) {
+  popup.setLngLat([place.lng, place.lat]).setHTML(createPopupContent(place)).addTo(map);
+  popup.getElement().querySelector('.share-btn')!.addEventListener('click', () => sharePlace(place));
+}
+
+async function sharePlace(place: Place) {
+  const url = shareUrl(location.href, place.id);
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: place.name, text: `${place.name}｜宿務在地地圖`, url });
+      return;
+    } catch (error) {
+      if ((error as DOMException).name === 'AbortError') return; // user closed the share sheet
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    toast('已複製連結，貼到群組吧 ✅');
+  } catch {
+    toast('無法複製，請手動複製網址列');
+  }
+}
+
+// Keep the address bar pointing at the open place so it can be copied as-is
+function setUrlPlace(id: string | null) {
+  const url = id ? shareUrl(location.href, id) : location.href.split('#')[0];
+  history.replaceState(null, '', url);
 }
 
 async function selectPlace(id: string, { orbit = true } = {}) {
@@ -371,7 +465,9 @@ async function selectPlace(id: string, { orbit = true } = {}) {
 
   stopOrbit();
   popup.remove();
+  if (isSpot(place) && modeOf(place) !== mode) setMode(modeOf(place));
   setActive(id);
+  setUrlPlace(id);
   if (mobileQuery.matches) setSheet('peek');
 
   if (place.id !== 'jpark') animateRoute([jpark.lng, jpark.lat], [place.lng, place.lat], 1400);
@@ -383,14 +479,14 @@ async function selectPlace(id: string, { orbit = true } = {}) {
     pitch: is3D ? 62 : 0,
     bearing: is3D ? map.getBearing() - 40 : 0,
     // Extra headroom on phones so the popup above the pin clears the map buttons
-    padding: mobileQuery.matches ? { ...cameraPadding(), top: 240 } : cameraPadding(),
+    padding: mobileQuery.matches ? { ...cameraPadding(), top: 330 } : cameraPadding(),
     duration: 2600,
     curve: 1.4,
     essential: true
   });
   if (token !== selection) return;
 
-  popup.setLngLat([place.lng, place.lat]).setHTML(createPopupContent(place)).addTo(map);
+  showPopup(place);
   if (orbit) startOrbit();
 }
 
@@ -410,6 +506,7 @@ function clearSelection() {
   popup.remove();
   clearRoute();
   setActive(null);
+  setUrlPlace(null);
 }
 
 popup.on('close', () => {
@@ -417,13 +514,19 @@ popup.on('close', () => {
   if (activeId) {
     clearRoute();
     setActive(null);
+    setUrlPlace(null);
   }
+});
+
+window.addEventListener('hashchange', () => {
+  const id = placeIdFromHash(location.hash, places.map(p => p.id));
+  if (id && id !== activeId) selectPlace(id);
 });
 
 // ---------- Filters ----------
 
 function placesInArea(): Place[] {
-  return places.filter(p => p.area === 'landmark' || activeArea === 'all' || p.area === activeArea);
+  return places.filter(p => inMode(p) && (p.area === 'landmark' || activeArea === 'all' || p.area === activeArea));
 }
 
 function getFilteredPlaces(): Place[] {
@@ -457,25 +560,57 @@ function initFilters() {
     });
   });
 
-  const chips = $('#category-chips');
-  chips.innerHTML = FOOD_CATEGORIES.map(cat => `
+  $('#category-chips').addEventListener('click', e => {
+    const chip = (e.target as HTMLElement).closest<HTMLButtonElement>('.chip');
+    if (!chip) return;
+    const cat = chip.dataset.category as Category;
+    if (activeCategories.has(cat)) activeCategories.delete(cat);
+    else activeCategories.add(cat);
+    applyFilters();
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.mode').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (tourRunning) stopTour();
+      clearSelection();
+      setMode(btn.dataset.mode as Mode);
+      // Bring the new list into view on phones, where a selection may have collapsed the sheet
+      if (mobileQuery.matches && sheetState === 'peek') setSheet('half');
+      applyFilters({ refit: true });
+    });
+  });
+
+  renderModeControls();
+}
+
+function setMode(next: Mode) {
+  if (next === mode) return;
+  mode = next;
+  activeCategories.clear();
+  renderModeControls();
+  updateMarkers();
+  updateList();
+}
+
+function renderModeControls() {
+  document.querySelectorAll<HTMLButtonElement>('.mode').forEach(btn => {
+    const on = btn.dataset.mode === mode;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-checked', String(on));
+  });
+  $('#roulette-btn').textContent = `🎲 ${MODES[mode].pick}`;
+  $('#roulette-label').textContent = MODES[mode].pick;
+  $('#tour-btn').textContent = `▶ ${MODES[mode].tour}`;
+  $('#category-chips').innerHTML = MODES[mode].categories.map(cat => `
     <button class="chip" data-category="${cat}" style="--c:${CATEGORY_META[cat].color}">
       <span>${CATEGORY_META[cat].emoji} ${CATEGORY_META[cat].label}</span><b class="chip-count"></b>
     </button>
   `).join('');
-  chips.querySelectorAll<HTMLButtonElement>('.chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const cat = chip.dataset.category as Category;
-      if (activeCategories.has(cat)) activeCategories.delete(cat);
-      else activeCategories.add(cat);
-      applyFilters();
-    });
-  });
   updateChips();
 }
 
 function updateChips() {
-  const inArea = placesInArea().filter(isFood);
+  const inArea = placesInArea().filter(isSpot);
   document.querySelectorAll<HTMLButtonElement>('.chip').forEach(chip => {
     const cat = chip.dataset.category as Category;
     chip.classList.toggle('active', activeCategories.has(cat));
@@ -487,14 +622,17 @@ function updateChips() {
 
 function createListItem(place: Place, index: number): string {
   const meta = primary(place);
-  const distance = place.id === 'jpark' ? '' : `<span>📍 ${distanceFromJpark(place).toFixed(1)} km</span>`;
+  const distance = sortMode === 'near' && userPos
+    ? `<span>🚶 離你 ${distanceKm(userPos, place).toFixed(1)} km</span>`
+    : place.id === 'jpark' ? '' : `<span>📍 ${distanceFromJpark(place).toFixed(1)} km</span>`;
   return `
     <button class="list-item${place.id === activeId ? ' is-active' : ''}" data-id="${place.id}" style="--c:${meta.color};--i:${index}">
       <span class="list-badge">${meta.emoji}</span>
       <span class="list-text">
-        <span class="list-item-name">${place.name}</span>
+        <span class="list-item-name">${place.name} ${openBadge(place)}</span>
         ${place.recommended ? `<span class="list-item-desc">${place.recommended}</span>` : ''}
         <span class="list-meta">${place.hours ? `<span>⏰ ${place.hours}</span>` : ''}${distance}</span>
+        ${place.price ? `<span class="list-price">💰 ${formatPrice(place.price, rate.value)}</span>` : ''}
       </span>
     </button>
   `;
@@ -502,11 +640,13 @@ function createListItem(place: Place, index: number): string {
 
 function updateList() {
   const filtered = getFilteredPlaces();
-  const groups: [string, Place[]][] = [
-    ['麥克坦島', filtered.filter(p => p.area === 'mactan')],
-    ['宿務市區', filtered.filter(p => p.area === 'cebu-city')],
-    ['地標', filtered.filter(p => p.area === 'landmark')]
-  ];
+  const groups: [string, Place[]][] = sortMode === 'near' && userPos
+    ? [['離你最近', sortByDistance(filtered, userPos)]]
+    : [
+      ['麥克坦島', filtered.filter(p => p.area === 'mactan')],
+      ['宿務市區', filtered.filter(p => p.area === 'cebu-city')],
+      ['地標', filtered.filter(p => p.area === 'landmark')]
+    ];
 
   let index = 0;
   $('#place-list').innerHTML = groups
@@ -514,7 +654,7 @@ function updateList() {
     .map(([title, group]) => `
       <div class="list-section"><h4>${title}</h4><span>${group.length}</span></div>
       ${group.map(place => createListItem(place, index++)).join('')}
-    `).join('') || '<p class="empty">沒有符合的店家，換個篩選試試 🍽️</p>';
+    `).join('') || `<p class="empty">${MODES[mode].empty}</p>`;
 
   document.querySelectorAll<HTMLElement>('.list-item').forEach(item => {
     const id = item.dataset.id!;
@@ -530,7 +670,7 @@ function updateList() {
 // ---------- 🎲 Roulette ----------
 
 async function spinRoulette() {
-  const pool = getFilteredPlaces().filter(isFood);
+  const pool = getFilteredPlaces().filter(isSpot);
   if (pool.length === 0) return;
   if (tourRunning) stopTour();
   clearSelection();
@@ -576,7 +716,8 @@ function burst() {
     const span = document.createElement('span');
     const angle = Math.random() * Math.PI * 2;
     const dist = 140 + Math.random() * 260;
-    span.textContent = BURST_EMOJI[i % BURST_EMOJI.length];
+    const emoji = MODES[mode].burst;
+    span.textContent = emoji[i % emoji.length];
     span.style.setProperty('--x', `${Math.cos(angle) * dist}px`);
     span.style.setProperty('--y', `${Math.sin(angle) * dist - 80}px`);
     span.style.setProperty('--r', `${Math.random() * 720 - 360}deg`);
@@ -590,7 +731,7 @@ function burst() {
 // ---------- ▶ Tour ----------
 
 async function startTour() {
-  const stops = getFilteredPlaces().filter(isFood);
+  const stops = getFilteredPlaces().filter(isSpot);
   if (stops.length === 0) return;
   clearSelection();
   tourRunning = true;
@@ -598,7 +739,7 @@ async function startTour() {
   document.body.classList.add('touring');
 
   for (let i = 0; i < stops.length && tourRunning; i++) {
-    $('#tour-progress').textContent = `巡禮中 ${i + 1}/${stops.length} · ${stops[i].name}`;
+    $('#tour-progress').textContent = `${MODES[mode].tour} ${i + 1}/${stops.length} · ${stops[i].name}`;
     await selectPlace(stops[i].id, { orbit: false });
     if (!tourRunning) return;
     startOrbit();
@@ -672,9 +813,109 @@ function initSheet() {
   }
 }
 
+// ---------- Sort by distance from me ----------
+
+function initSort() {
+  document.querySelectorAll<HTMLButtonElement>('.sort').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const next = btn.dataset.sort as 'area' | 'near';
+      if (next === 'area') return applySort('area');
+      if (!navigator.geolocation) return toast('這支手機不支援定位');
+      btn.classList.add('loading');
+      navigator.geolocation.getCurrentPosition(
+        ({ coords }) => {
+          btn.classList.remove('loading');
+          userPos = { lat: coords.latitude, lng: coords.longitude };
+          applySort('near');
+        },
+        () => {
+          btn.classList.remove('loading');
+          toast('拿不到你的位置，請允許定位後再試一次');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    });
+  });
+}
+
+function applySort(next: 'area' | 'near') {
+  sortMode = next;
+  document.querySelectorAll<HTMLButtonElement>('.sort').forEach(b => b.classList.toggle('active', b.dataset.sort === next));
+  updateList();
+  $('.panel-body').scrollTo({ top: 0 });
+}
+
+// ---------- Peso ⇄ yen ----------
+
+function initConverter() {
+  const php = $<HTMLInputElement>('#php-input');
+  const jpy = $<HTMLInputElement>('#jpy-input');
+  const parse = (value: string) => Number(value.replace(/[^\d.]/g, ''));
+
+  const fromPhp = () => {
+    const amount = parse(php.value);
+    jpy.value = php.value.trim() && amount >= 0 ? String(Math.round(amount * rate.value)) : '';
+  };
+  const fromJpy = () => {
+    const amount = parse(jpy.value);
+    const pesos = amount / rate.value;
+    php.value = jpy.value.trim() && amount >= 0 ? (pesos >= 100 ? String(Math.round(pesos)) : pesos.toFixed(1)) : '';
+  };
+
+  php.addEventListener('input', fromPhp);
+  jpy.addEventListener('input', fromJpy);
+  document.querySelectorAll<HTMLButtonElement>('.quick-amounts button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      php.value = btn.dataset.php!;
+      fromPhp();
+    });
+  });
+  renderRate();
+  refreshRate().then(fromPhp);
+}
+
+function renderRate() {
+  const [, month, day] = rate.date.split('-');
+  $('#rate-info').textContent = `₱1 ≈ ¥${rate.value.toFixed(2)}（${Number(month)}/${Number(day)} 匯率，實際以兌換處為準）`;
+}
+
+// Fetch today's rate; on failure keep the cached or built-in one so it still works offline
+async function refreshRate() {
+  try {
+    const response = await fetch('https://open.er-api.com/v6/latest/PHP');
+    const data = await response.json() as { result: string; time_last_update_unix: number; rates: { JPY: number } };
+    if (data.result !== 'success') return;
+    const date = new Date(data.time_last_update_unix * 1000).toISOString().slice(0, 10);
+    if (date < rate.date) return;
+    rate = { value: data.rates.JPY, date };
+    try { localStorage.setItem(RATE_KEY, JSON.stringify(rate)); } catch { /* not persisted; fine for this visit */ }
+    renderRate();
+    updateList();
+    const open = activeId && popup.isOpen() ? places.find(p => p.id === activeId) : undefined;
+    if (open) showPopup(open);
+  } catch {
+    /* offline: the shown rate's date tells people how old it is */
+  }
+}
+
+// ---------- Hotel & emergency card ----------
+
+function initHotelCard() {
+  const modal = $('#hotel-card');
+  const close = () => { modal.hidden = true; };
+  $('#hotel-btn').addEventListener('click', () => { modal.hidden = false; });
+  $('#hotel-close').addEventListener('click', close);
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });
+}
+
 // ---------- Info panel & tabs ----------
 
 function initInfoPanel() {
+  $('#phrases-content').innerHTML = phrases.map(item => `
+    <div class="phrase"><strong>${item.phrase}</strong><span>${item.meaning}</span></div>
+  `).join('');
+
   $('#glossary-content').innerHTML = glossary.map(item => `
     <div class="glossary-item"><strong>${item.term}</strong><span>${item.description}</span></div>
   `).join('');
@@ -702,10 +943,18 @@ function initTabs() {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
+  if (sharedPlaceId) {
+    const shared = places.find(p => p.id === sharedPlaceId)!;
+    if (isSpot(shared)) mode = modeOf(shared);
+  }
   initSheet();
   initFilters();
+  initSort();
+  initConverter();
+  initHotelCard();
   initInfoPanel();
   initTabs();
   initViewControls();
   initMap();
+  setInterval(refreshOpenBadges, 60_000);
 });

@@ -18,7 +18,7 @@ These locations have coordinates from verified sources (OSM, business listings, 
 | Location | Coordinates | Source |
 |----------|-------------|--------|
 | Mactan-Cebu International Airport | 10.3103, 123.9793 | OSM: Madrid Street, Aldea del Sol, Soong 1, Bankal |
-| J Park vicinity (Maribago) | 10.2848, 123.9974 | OSM: Maribago area (City by the Sea Hotel vicinity) |
+| JPark Island Resort & Waterpark | 10.28276, 123.99551 | OSM node "JPark resort", M.L. Quezon Highway, Maribago (Wikipedia: 10.2820, 123.9964) |
 
 ### Mactan Island Restaurants
 | Location | Coordinates | Source |
@@ -39,6 +39,21 @@ These locations have coordinates from verified sources (OSM, business listings, 
 | Carlos Special Ngohiong | 10.3146163, 123.9122027 | OSM + keeta.ph: C. Borces Street, Mabolo |
 | Way Tugpahay Siomai sa Tisa | 10.3015678, 123.8706038 | OSM: Katipunan Street, Tisa |
 | Carbon Market | 10.2920, 123.8978 | OSM: exact entity match |
+
+### Sightseeing (added Oct 27, 2026, exact OSM matches)
+| Location | Coordinates | Source |
+|----------|-------------|--------|
+| Magellan's Cross | 10.2935702, 123.9019584 | OSM: Magellan's Cross Pavilion, Magallanes Street |
+| Basilica del Santo Niño | 10.2943421, 123.9021033 | OSM: Basilica Minore del Santo Niño, Osmeña Boulevard |
+| Fort San Pedro | 10.2927283, 123.9058911 | OSM: Fort San Pedro, A. Pigafetta Street |
+| Yap-San Diego Ancestral House | 10.2992579, 123.9039722 | OSM: Yap Sandiego Ancestral House, Mabini Street |
+| Heritage of Cebu Monument | 10.2988934, 123.9036170 | OSM: Heritage of Cebu Monument, Sikatuna Street |
+| Mactan Shrine | 10.3109738, 124.0151380 | OSM: Liberty Shrine, Mactan |
+| Temple of Leah | 10.3688795, 123.8733158 | OSM: Temple of Leah, Roosevelt Drive, Busay |
+| Cebu Taoist Temple | 10.3343184, 123.8879852 | OSM: Cebu Taoist Temple, Canyon Road, Beverly Hills |
+| Sirao Flower Garden | 10.4070429, 123.8665474 | OSM: Sirao Garden, Kamandagan, Sirao |
+
+The previous J Park point (10.2848, 123.9974) was an area guess that landed on EGI Cebu Resort & Hotel, about 300 m away; it was replaced with the OSM node above.
 
 ## Approximate Coordinates (2 locations)
 
@@ -95,7 +110,6 @@ From area centers or complex locations:
 - Mactan Newtown (shopping complex center)
 - Trillis (Pusok area center)
 - Larsian (Fuente Osmena Circle area)
-- J Park Resort (Maribago area center)
 
 ### Low Confidence - 0 locations
 All restaurants now have verified coordinates from real sources. Previous area guesses have been replaced with addresses from source articles and business listings.
@@ -126,7 +140,7 @@ All restaurants now have verified coordinates from real sources. Previous area g
 
 ## Distance Calculations
 
-All distances calculated from J Park Resort (10.2848, 123.9974) using haversine formula:
+All distances calculated from J Park Resort (10.28276, 123.99551) using haversine formula:
 - Mactan Island restaurants: 1-10 km
 - Cebu City restaurants: 12-20 km
 - MCIA Airport: 1.7 km

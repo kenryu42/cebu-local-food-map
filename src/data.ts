@@ -1,5 +1,5 @@
 /**
- * Cebu Food Map Data
+ * Cebu Food & Sightseeing Map Data
  * Coordinates source: OpenStreetMap Nominatim API (Oct 27, 2026)
  * 
  * Verified coordinates (exact match from Nominatim):
@@ -12,7 +12,12 @@
  *   These use nearby landmarks or area centers as reference points
  */
 
-export type Category = 'lechon' | 'bbq' | 'puso' | 'ngohiong-siomai' | 'market' | 'lodging' | 'airport';
+import type { Hours, Price } from './trip';
+
+export type Category =
+  | 'lechon' | 'bbq' | 'puso' | 'ngohiong-siomai' | 'market'
+  | 'history' | 'temple' | 'viewpoint'
+  | 'lodging' | 'airport';
 export type Area = 'mactan' | 'cebu-city' | 'landmark';
 
 export interface Place {
@@ -27,6 +32,8 @@ export interface Place {
   recommended?: string; // Chinese text
   distance?: string; // Chinese text
   hours?: string;
+  openHours?: Hours; // only where sources agree; drives the 營業中 badge
+  price?: Price;
   coordinateSource: 'verified' | 'approximate';
   coordinateNote?: string;
 }
@@ -36,13 +43,13 @@ export const places: Place[] = [
   {
     id: 'jpark',
     name: 'J Park Island Resort & Waterpark',
-    googleQuery: 'J Park Island Resort Waterpark Maribago Lapu-Lapu',
-    lat: 10.2848,
-    lng: 123.9974,
+    googleQuery: 'JPark Island Resort & Waterpark Maribago Lapu-Lapu',
+    lat: 10.28276,
+    lng: 123.99551,
     area: 'landmark',
     categories: ['lodging'],
-    coordinateSource: 'approximate',
-    coordinateNote: 'Maribago area center from OSM (City by the Sea Hotel vicinity)'
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM node "JPark resort", M.L. Quezon Highway, Maribago (matches Wikipedia 10.2820, 123.9964)'
   },
   {
     id: 'mcia',
@@ -69,6 +76,7 @@ export const places: Place[] = [
     recommended: '宿務老牌燒烤：烤豬肉串、liempo（烤五花）、焗扇貝配 puso，位子多適合團體',
     distance: '約 1–2 km',
     hours: '11:00–23:00',
+    openHours: [['11:00', '23:00']],
     coordinateSource: 'verified',
     coordinateNote: 'M.L. Quezon National Highway, Soong 1, Maribago (from Exa.ai/Waze listing)'
   },
@@ -154,6 +162,7 @@ export const places: Place[] = [
     categories: ['lechon'],
     recommended: '在地人推薦的烤乳豬名店，中午排隊，下午常只剩碎肉',
     hours: '總店約 08:00–17:00',
+    openHours: [['08:00', '17:00']],
     coordinateSource: 'verified',
     coordinateNote: '1377 V. Rama Avenue, Guadalupe (from chillandtravel.com + OSM Nominatim)'
   },
@@ -167,6 +176,7 @@ export const places: Place[] = [
     categories: ['puso', 'lechon', 'bbq'],
     recommended: '戶外美食區：tuslob buwa、Carcar 風味烤乳豬、燒烤，用手吃',
     hours: '約 10:00–22:00',
+    openHours: [['10:00', '22:00']],
     coordinateSource: 'verified',
     coordinateNote: 'OSM: Puso Village, M.L. Quezon Boulevard, Duljo Fatima'
   },
@@ -178,8 +188,9 @@ export const places: Place[] = [
     lng: 123.8935,
     area: 'cebu-city',
     categories: ['bbq'],
-    recommended: '經典串燒街，自挑生肉串現烤，每人約 ₱150–300，只收現金',
+    recommended: '經典串燒街，自挑生肉串現烤，只收現金',
     hours: '18:00–21:00 最熱鬧',
+    price: { min: 150, max: 300, label: '每人' },
     coordinateSource: 'verified',
     coordinateNote: 'OSM: Fuente Osmena Circle area'
   },
@@ -221,6 +232,134 @@ export const places: Place[] = [
     hours: '約 05:00–17:00（需確認）',
     coordinateSource: 'verified',
     coordinateNote: 'OSM: Carbon Market, Cebu City'
+  },
+
+  // Sightseeing: hours and fees differ between sources, so they stay marked 需確認
+  {
+    id: 'magellans-cross',
+    name: "Magellan's Cross 麥哲倫十字架",
+    googleQuery: "Magellan's Cross Cebu City",
+    lat: 10.2935702,
+    lng: 123.9019584,
+    area: 'cebu-city',
+    categories: ['history'],
+    recommended: '1521 年麥哲倫立下的十字架，亭子天花板有登陸壁畫；就在聖嬰教堂旁，兩個一起逛',
+    hours: '白天開放（需確認）',
+    price: { min: 0, label: '' },
+    coordinateSource: 'verified',
+    coordinateNote: "OSM: Magellan's Cross Pavilion, Magallanes Street"
+  },
+  {
+    id: 'santo-nino',
+    name: 'Basilica del Santo Niño 聖嬰大教堂',
+    googleQuery: 'Basilica Minore del Santo Niño Cebu',
+    lat: 10.2943421,
+    lng: 123.9021033,
+    area: 'cebu-city',
+    categories: ['temple', 'history'],
+    recommended: '菲律賓最古老的教堂之一，供奉聖嬰像；勿穿露肩、短褲，11/1 前後人潮很多',
+    hours: '依彌撒時段開放（需確認）',
+    price: { min: 0, label: '' },
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM: Basilica Minore del Santo Niño, Osmeña Boulevard'
+  },
+  {
+    id: 'fort-san-pedro',
+    name: 'Fort San Pedro 聖佩德羅堡',
+    googleQuery: 'Fort San Pedro Cebu City',
+    lat: 10.2927283,
+    lng: 123.9058911,
+    area: 'cebu-city',
+    categories: ['history'],
+    recommended: '西班牙時期的三角形石造堡壘，可以走上城牆看港口，傍晚光線最美',
+    hours: '約 08:00–19:00（需確認）',
+    price: { min: 30, max: 50, label: '門票' },
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM: Fort San Pedro, A. Pigafetta Street'
+  },
+  {
+    id: 'yap-sandiego',
+    name: 'Yap-San Diego Ancestral House 古宅',
+    googleQuery: 'Yap-San Diego Ancestral House Cebu',
+    lat: 10.2992579,
+    lng: 123.9039722,
+    area: 'cebu-city',
+    categories: ['history'],
+    recommended: '1600 年代華人商人的古宅，珊瑚石牆、木造二樓和老家具，很好拍',
+    hours: '約 09:00–18:00（需確認）',
+    price: { min: 50, max: 100, label: '門票' },
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM: Yap Sandiego Ancestral House, Mabini Street'
+  },
+  {
+    id: 'heritage-monument',
+    name: 'Heritage of Cebu Monument 宿務遺產紀念碑',
+    googleQuery: 'Heritage of Cebu Monument',
+    lat: 10.2988934,
+    lng: 123.9036170,
+    area: 'cebu-city',
+    categories: ['history'],
+    recommended: '用一整組雕塑濃縮宿務歷史，離古宅走路 1 分鐘',
+    hours: '戶外，隨時可看',
+    price: { min: 0, label: '' },
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM: Heritage of Cebu Monument, Sikatuna Street'
+  },
+  {
+    id: 'mactan-shrine',
+    name: 'Mactan Shrine（Lapu-Lapu 紀念公園）',
+    googleQuery: 'Mactan Shrine Liberty Shrine Lapu-Lapu',
+    lat: 10.3109738,
+    lng: 124.0151380,
+    area: 'mactan',
+    categories: ['history'],
+    recommended: '紀念英雄 Lapu-Lapu 擊退麥哲倫的地方，有銅像和紀念碑；旁邊海邊有海鮮餐廳',
+    hours: '白天開放（需確認）',
+    price: { min: 0, label: '' },
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM: Liberty Shrine, Mactan'
+  },
+  {
+    id: 'temple-of-leah',
+    name: 'Temple of Leah',
+    googleQuery: 'Temple of Leah Cebu City',
+    lat: 10.3688795,
+    lng: 123.8733158,
+    area: 'cebu-city',
+    categories: ['viewpoint'],
+    recommended: '山上的羅馬風神殿，可以俯瞰整個宿務；傍晚去看夕陽和夜景，山上比較涼',
+    hours: '約 06:00–23:00（需確認）',
+    price: { min: 50, max: 100, label: '門票' },
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM: Temple of Leah, Roosevelt Drive, Busay'
+  },
+  {
+    id: 'taoist-temple',
+    name: 'Cebu Taoist Temple 定光寶殿',
+    googleQuery: 'Cebu Taoist Temple Beverly Hills',
+    lat: 10.3343184,
+    lng: 123.8879852,
+    area: 'cebu-city',
+    categories: ['temple', 'viewpoint'],
+    recommended: '比佛利山上的道教廟，紅瓦和龍雕，可以眺望市區；參拜區請保持安靜',
+    hours: '需確認',
+    price: { min: 0, label: '' },
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM: Cebu Taoist Temple, Canyon Road, Beverly Hills'
+  },
+  {
+    id: 'sirao-garden',
+    name: 'Sirao Flower Garden 小阿姆斯特丹',
+    googleQuery: 'Sirao Flower Garden Cebu City',
+    lat: 10.4070429,
+    lng: 123.8665474,
+    area: 'cebu-city',
+    categories: ['viewpoint'],
+    recommended: '山區花田，有風車和彩色拍照裝置；早上去花最漂亮也比較不熱，可以和 Temple of Leah 排同一趟',
+    hours: '約 08:00–17:00（需確認）',
+    price: { min: 50, max: 100, label: '門票' },
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM: Sirao Garden, Kamandagan, Sirao'
   }
 ];
 
@@ -232,6 +371,16 @@ export const glossary = [
   { term: 'Tuslob buwa', description: '冒泡的豬腦醬，拿 puso 下去沾' },
   { term: 'Siomai sa Tisa', description: '宿務在地燒賣，配辣蒜醬' },
   { term: 'Puto maya + sikwate', description: '糯米飯配濃熱巧克力，當地早餐' }
+];
+
+export const phrases = [
+  { phrase: 'Salamat', meaning: '謝謝' },
+  { phrase: 'Maayong buntag', meaning: '早安' },
+  { phrase: 'Pila ni?', meaning: '這個多少錢？' },
+  { phrase: 'Lami kaayo!', meaning: '超好吃！' },
+  { phrase: 'Palihug', meaning: '麻煩你／拜託' },
+  { phrase: 'Asa ang CR?', meaning: '廁所在哪裡？' },
+  { phrase: 'Oo / Dili', meaning: '是／不是' }
 ];
 
 export const streetFoodTips = [
@@ -253,5 +402,9 @@ export const sources = [
   { title: 'Puso Village 指南', site: 'sugbo.ph', url: 'https://sugbo.ph/2025/your-guide-to-puso-village/' },
   { title: 'Larsian BBQ 指南', site: 'cebudestinations.com', url: 'https://cebudestinations.com/guide/larsian-bbq-guide-fuente' },
   { title: 'Way Tugpahay Siomai sa Tisa', site: 'foodpanda.ph', url: 'https://www.foodpanda.ph/restaurant/m6jh/way-tugpahay-siomai-sa-tisa-tisa' },
-  { title: 'Carbon Market puto maya + sikwate', site: 'cebuinsights.com', url: 'https://cebuinsights.com/food/filipino-food/puto-sikwate-carbon-market/' }
+  { title: 'Carbon Market puto maya + sikwate', site: 'cebuinsights.com', url: 'https://cebuinsights.com/food/filipino-food/puto-sikwate-carbon-market/' },
+  { title: 'Fort San Pedro 指南', site: '3d-universal.com', url: 'https://3d-universal.com/en/blogs/the-ultimate-guide-to-fort-san-pedro.html' },
+  { title: 'Yap-San Diego 古宅指南', site: '3d-universal.com', url: 'https://3d-universal.com/en/blogs/ultimate-guide-to-yap-sandiego-ancestral-house-cebu.html' },
+  { title: 'Temple of Leah', site: 'suroy.ph', url: 'https://suroy.ph/temple-of-leah/' },
+  { title: 'Sirao Flower Garden', site: 'suroy.ph', url: 'https://suroy.ph/sirao-garden-the-little-amsterdam-of-cebu/' }
 ];

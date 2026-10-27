@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="宿務在地人美食地圖 - 42人日本公司旅遊指南 (2026/10/28-11/1)" />
+    <meta name="description" content="宿務在地人美食・景點地圖 - 42人日本公司旅遊指南 (2026/10/28-11/1)" />
     <meta name="theme-color" content="#ff5a36" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet" />
-    <title>宿務在地美食 3D 地圖</title>
+    <title>宿務在地美食・景點 3D 地圖</title>
   </head>
   <body>
     <div id="map"></div>
@@ -28,8 +28,14 @@
       <button id="sheet-handle" class="sheet-handle" aria-label="展開或收合清單"><span></span></button>
 
       <header class="panel-header">
-        <h1>🗺️ 宿務在地美食</h1>
-        <p class="trip-info">📅 10/28–11/1 · 👥 42人 · 🏨 J Park Island Resort</p>
+        <div class="panel-title">
+          <h1>🗺️ 宿務在地</h1>
+          <p class="trip-info">📅 10/28–11/1 · 👥 42人</p>
+        </div>
+        <div class="mode-switch" role="radiogroup" aria-label="模式">
+          <button class="mode active" data-mode="food" role="radio" aria-checked="true">🍴 美食</button>
+          <button class="mode" data-mode="sight" role="radio" aria-checked="false">📸 景點</button>
+        </div>
       </header>
 
       <div class="actions">
@@ -53,6 +59,11 @@
 
       <div class="panel-body">
         <div id="list-panel" class="tab-panel active">
+          <div class="sort-bar" role="radiogroup" aria-label="排序">
+            <span>排序</span>
+            <button class="sort active" data-sort="area">依地區</button>
+            <button class="sort" data-sort="near">📍 離我最近</button>
+          </div>
           <div id="place-list"></div>
         </div>
 
@@ -60,6 +71,27 @@
           <div class="info-section callout">
             <strong>⚠️ Undas 連假提醒</strong>
             <p>10/31 (六) 是 Undas 連假第一天，從麥克坦島去市區可能要 90 分鐘以上。市區的店最好排在前幾天。小店可能提早關門，出發前先確認。</p>
+          </div>
+
+          <div class="info-section">
+            <h4>💱 披索 ⇄ 日圓</h4>
+            <div class="converter">
+              <label class="money"><span>₱</span><input id="php-input" type="text" inputmode="decimal" placeholder="0" aria-label="披索" /></label>
+              <span class="swap" aria-hidden="true">⇄</span>
+              <label class="money"><span>¥</span><input id="jpy-input" type="text" inputmode="decimal" placeholder="0" aria-label="日圓" /></label>
+            </div>
+            <div class="quick-amounts">
+              <button data-php="20">₱20</button>
+              <button data-php="100">₱100</button>
+              <button data-php="500">₱500</button>
+              <button data-php="1000">₱1,000</button>
+            </div>
+            <p id="rate-info" class="rate-info"></p>
+          </div>
+
+          <div class="info-section">
+            <h4>🗣️ 宿務話小教室</h4>
+            <div id="phrases-content"></div>
           </div>
 
           <div class="info-section">
@@ -73,7 +105,7 @@
           </div>
 
           <div class="info-section">
-            <h4>店家介紹文章</h4>
+            <h4>店家與景點介紹文章</h4>
             <div id="sources-content"></div>
           </div>
         </div>
@@ -83,12 +115,13 @@
     <div class="map-tools">
       <button id="view-toggle" class="tool" title="切換 2D / 3D">2D</button>
       <button id="reset-view" class="tool" title="回到全覽">⤢</button>
+      <button id="hotel-btn" class="tool tool-hotel" title="回飯店／緊急聯絡">🏨</button>
     </div>
 
     <!-- Slot-machine picker -->
     <div id="roulette" class="roulette" hidden>
       <div class="roulette-card">
-        <p class="roulette-label">今晚吃什麼？</p>
+        <p id="roulette-label" class="roulette-label">今晚吃什麼？</p>
         <div class="roulette-window"><div id="roulette-name" class="roulette-name"></div></div>
         <p id="roulette-desc" class="roulette-desc"></p>
       </div>
@@ -98,6 +131,31 @@
       <span id="tour-progress"></span>
       <button id="tour-stop" class="tour-stop">■ 停止巡禮</button>
     </div>
+
+    <!-- Card to show a taxi or Grab driver, plus emergency contacts -->
+    <div id="hotel-card" class="sheet-modal" hidden>
+      <div class="hotel-card" role="dialog" aria-modal="true" aria-labelledby="hotel-title">
+        <button id="hotel-close" class="modal-close" aria-label="關閉">×</button>
+        <p class="driver-label">給司機看 · Show to driver</p>
+        <div class="driver-card">
+          <p class="driver-ask">Please take me to</p>
+          <h2 id="hotel-title">JPark Island Resort &amp; Waterpark</h2>
+          <p class="driver-address">M.L. Quezon Highway, Maribago,<br />Lapu-Lapu City, Cebu</p>
+        </div>
+        <div class="hotel-actions">
+          <a class="hotel-action" href="https://www.google.com/maps/dir/?api=1&amp;destination=JPark+Island+Resort+%26+Waterpark+Maribago+Lapu-Lapu" target="_blank" rel="noopener noreferrer">🧭 導航回飯店</a>
+          <a class="hotel-action" href="tel:+63324945000">📞 打給飯店</a>
+        </div>
+        <div class="emergency">
+          <a class="emergency-row urgent" href="tel:911"><span>🚨 菲律賓緊急電話</span><b>911</b></a>
+          <a class="emergency-row" href="tel:+63322317321">
+            <span>🇯🇵 日本國駐宿務總領事館<small>2Quad Building 8F, Cebu Business Park · 平日 08:30–17:15</small></span><b>(032) 231-7321</b>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <div id="burst" class="burst" aria-hidden="true"></div>
 
