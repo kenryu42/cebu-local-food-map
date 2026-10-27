@@ -1211,6 +1211,8 @@ body.ready .map-tools {
   color: var(--ink-soft);
 }
 
+.emergency-row .tel { white-space: nowrap; }
+
 .emergency-row b {
   flex-shrink: 0;
   font-size: 15px;

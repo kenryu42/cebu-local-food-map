@@ -29,7 +29,7 @@ Interactive 3D map of authentic local eateries and sightseeing spots in Cebu, Ph
   - Prices and entry fees in pesos with the yen equivalent
   - Direct Google Maps navigation links
   - 🔗 Share a spot: links (`#place=<id>`) open straight to that spot
-  - 🏨 Hotel card to show drivers, plus 911 and the Consulate General of Japan in Cebu
+  - 🏨 Hotel card to show drivers, plus 911 and emergency lines for the Chinese Consulate General in Cebu, the Taipei Economic and Cultural Office (Manila), and the Consulate General of Japan in Cebu
   - ₱ ⇄ ¥ converter (live rate, cached for offline use)
   - Cebuano phrases
   - Local dish glossary
