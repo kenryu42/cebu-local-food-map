@@ -169,6 +169,9 @@ function initMap() {
     maxPitch: 75,
     attributionControl: false
   });
+  // #map is position: fixed, so it is its own stacking context; the tools join it so a
+  // popup can stack above them rather than behind
+  map.getContainer().append($('.map-tools'));
 
   map.setStyle('https://tiles.openfreemap.org/styles/liberty', {
     transformStyle: (_previous, style) => ({

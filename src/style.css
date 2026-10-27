@@ -166,12 +166,13 @@ body.ready .panel[data-sheet="full"] {
   background: var(--cream);
 }
 
-/* The full sheet covers the map's 🏨 button, so it brings its own in the handle row */
-.sheet-hotel {
+/* The full sheet covers the map's 🏨 button, so it brings its own in the handle row.
+   .tool.sheet-hotel outranks the later .tool sizes so it fits the 44px row above the header. */
+.tool.sheet-hotel {
   position: absolute;
   top: calc(4px + env(safe-area-inset-top));
   right: 12px;
-  width: 36px;
+  width: 40px;
   height: 36px;
   border-radius: 12px;
   font-size: 18px;
@@ -803,7 +804,8 @@ body.ready .map-tools {
 
 /* ---------- Popup ---------- */
 
-.maplibregl-popup { z-index: 5; }
+/* Above the map tools (15) so they never cover the card, below the sheet (20) */
+.maplibregl-popup { z-index: 16; }
 
 .maplibregl-popup-content {
   padding: 0;
