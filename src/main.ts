@@ -75,7 +75,9 @@ maplibregl.setWorkerUrl(workerUrl);
 let map: maplibregl.Map;
 const markers = new Map<string, maplibregl.Marker>();
 // 320px fits a 390px phone with the map's 16px gutters on both sides; buttons need the width
-const popup = new maplibregl.Popup({ offset: [0, -48], maxWidth: 'min(320px, calc(100vw - 32px))', focusAfterOpen: false });
+// Subpixel positioning: while the camera orbits, the pin's projected point hovers on a half
+// pixel, and rounding it made the popup and pin flicker 1px back and forth every frame
+const popup = new maplibregl.Popup({ offset: [0, -48], maxWidth: 'min(320px, calc(100vw - 32px))', focusAfterOpen: false, subpixelPositioning: true });
 let mode: Mode = 'food';
 let activeArea: Area | 'all' = 'all';
 const activeCategories = new Set<Category>();
@@ -393,7 +395,7 @@ function createMarkerElement(place: Place): HTMLElement {
 
 function addMarkers() {
   places.forEach(place => {
-    const marker = new maplibregl.Marker({ element: createMarkerElement(place), anchor: 'bottom' })
+    const marker = new maplibregl.Marker({ element: createMarkerElement(place), anchor: 'bottom', subpixelPositioning: true })
       .setLngLat([place.lng, place.lat])
       .addTo(map);
     markers.set(place.id, marker);
