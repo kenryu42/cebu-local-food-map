@@ -1,21 +1,13 @@
 /**
  * Cebu Food & Sightseeing Map Data
- * Coordinates source: OpenStreetMap Nominatim API (Oct 27, 2026)
- * 
- * Verified coordinates (exact match from Nominatim):
- * - MCIA Airport, Carbon Market, Lapu-Lapu City Public Market
- * - Fuente Osmena Circle, Mactan Newtown, Pusok area, Puso Village
- * - Maribago area (for J Park)
- * 
- * Approximate coordinates (area-based, flagged as needs_verification):
- * - Specific restaurant locations not in OSM database
- *   These use nearby landmarks or area centers as reference points
+ * Spots fact-checked in Oct 2026 for good food at a fair price; see README "How spots are chosen".
+ * Each place's coordinateNote says where its coordinates come from (mostly OSM).
  */
 
 import type { Hours, Price } from './trip';
 
 export type Category =
-  | 'lechon' | 'bbq' | 'puso' | 'ngohiong-siomai' | 'market'
+  | 'lechon' | 'bbq' | 'puso' | 'ngohiong-siomai' | 'local-dish' | 'michelin' | 'market'
   | 'history' | 'temple' | 'viewpoint'
   | 'lodging' | 'airport';
 export type Area = 'mactan' | 'cebu-city' | 'landmark';
@@ -79,10 +71,11 @@ export const places: Place[] = [
     lng: 124.001135,
     area: 'mactan',
     categories: ['bbq', 'puso'],
-    recommended: '宿務老牌燒烤：烤豬肉串、liempo（烤五花）、焗扇貝配 puso，位子多適合團體',
+    recommended: '宿務老牌自選燒烤：烤豬肉串、liempo（烤五花）、焗扇貝配 puso。離飯店最近，有包廂，大團體先訂位',
     distance: '約 1–2 km',
     hours: '11:00–23:00',
     openHours: [['11:00', '23:00']],
+    price: { min: 250, max: 450, label: '每人' },
     coordinateSource: 'verified',
     coordinateNote: 'M.L. Quezon National Highway, Soong 1, Maribago (from Exa.ai/Waze listing)'
   },
@@ -94,53 +87,29 @@ export const places: Place[] = [
     lng: 124.0130,
     area: 'mactan',
     categories: ['lechon'],
-    recommended: '宿務人公認好吃不貴的去骨烤乳豬，同美食區可買 Titay\'s rosquillos 餅乾',
+    recommended: '宿務本地烤乳豬品牌，在 Alfresco 美食市集現烤，外帶或內用都方便',
     distance: '約 3–5 km',
-    hours: '時間需確認',
+    hours: '10:00–20:00',
+    openHours: [['10:00', '20:00']],
+    price: { min: 200, max: 350, label: '每人' },
     coordinateSource: 'verified',
-    coordinateNote: 'OSM: Mactan Newtown complex'
+    coordinateNote: 'OSM: Mactan Newtown complex (Alfresco de Mactan food market; hours from cebuayerslechon.com)'
   },
   {
     id: 'trillis',
     name: 'Trillis (Pusok)',
     googleQuery: 'Trillis Pusok Lapu-Lapu',
-    lat: 10.3245,
-    lng: 123.9743,
+    lat: 10.3232,
+    lng: 123.9714,
     area: 'mactan',
     categories: ['bbq', 'ngohiong-siomai'],
-    recommended: '平價燒烤配吃到飽白飯，點 ngohiong、chorizo de Cebu，乾淨適合團體',
+    recommended: '平價燒烤配吃到飽白飯，點 ngohiong、chorizo de Cebu。三層樓開放式，適合團體；在新橋下 Petron 加油站後面',
     distance: '約 6–8 km',
-    hours: '10:00–23:00（需確認）',
-    coordinateSource: 'verified',
-    coordinateNote: 'OSM: Pusok, Lapu-Lapu area'
-  },
-  {
-    id: 'nonies',
-    name: "Nonie's Barbecue",
-    googleQuery: "Nonie's Barbecue Agus Lapu-Lapu",
-    lat: 10.280507,
-    lng: 123.984192,
-    area: 'mactan',
-    categories: ['bbq', 'puso'],
-    recommended: '路邊串燒攤：烤豬肉串、雞皮、雞腸、雞胗配 puso',
-    distance: '約 4–6 km',
-    hours: '15:00 開（需確認）',
-    coordinateSource: 'verified',
-    coordinateNote: 'Ibabao-Gisi-Agus Rd, Agus (from Exa.ai listing + mactannow.com)'
-  },
-  {
-    id: 'langging',
-    name: 'Langging Fried Chicken',
-    googleQuery: 'Langging Fried Chicken Lapu-Lapu',
-    lat: 10.281084,
-    lng: 123.983537,
-    area: 'mactan',
-    categories: ['ngohiong-siomai'],
-    recommended: '在地平價快餐：炸雞、ngohiong、蒸燒賣',
-    distance: '約 4–6 km',
-    hours: '06:00–20:00（需確認）',
-    coordinateSource: 'verified',
-    coordinateNote: 'Ibabao-Gisi-Agus Rd, Ibabao Agus (from Exa.ai listing + mactannow.com)'
+    hours: '10:00–23:00',
+    openHours: [['10:00', '23:00']],
+    price: { min: 200, max: 400, label: '每人' },
+    coordinateSource: 'approximate',
+    coordinateNote: 'Behind the Petron station under Marcelo Fernan Bridge, Pusok (keeta.ph 2026, mactannow.com); placed beside the OSM Petron node'
   },
   {
     id: 'lapu-lapu-market',
@@ -150,11 +119,26 @@ export const places: Place[] = [
     lng: 123.9505,
     area: 'mactan',
     categories: ['market'],
-    recommended: '市場買魚論斤秤，請旁邊攤位烤、煮或做生醃；只收現金',
+    recommended: '麥克坦島的在地傳統市場，看魚貨和熱帶水果；攤位有烤豬肉串配 puso。早上 9 點前最新鮮，只收現金',
     distance: '約 8–10 km',
     hours: '早上最新鮮',
+    price: { min: 100, max: 250, label: '每人' },
     coordinateSource: 'verified',
     coordinateNote: 'OSM: Lapu-Lapu City Public Market'
+  },
+  {
+    id: 'entoys-bakasihan',
+    name: "Entoy's Bakasihan",
+    googleQuery: "Entoy's Bakasihan Cordova Cebu",
+    lat: 10.2470426,
+    lng: 123.9382684,
+    area: 'mactan',
+    categories: ['local-dish'],
+    recommended: 'Cordova 海邊的老店，專做 bakasi（小海鰻）：酸辣燉 bakasi、炸 bakasi。上午去，下午可能賣完；時間不固定，先打電話 0943-359-9048',
+    hours: '約 06:00–19:00（需確認）',
+    price: { min: 250, max: 500, label: '每人' },
+    coordinateSource: 'verified',
+    coordinateNote: "OSM: Entoy's Bakasihan, Buagsong, Cordova (suroy.ph 2026)"
   },
   
   // Cebu City
@@ -166,39 +150,12 @@ export const places: Place[] = [
     lng: 123.8851174,
     area: 'cebu-city',
     categories: ['lechon'],
-    recommended: '在地人推薦的烤乳豬名店，中午排隊，下午常只剩碎肉',
+    recommended: '宿務人最常推薦的烤乳豬，皮脆肉香。中午前去，週末假日上午就可能賣完，人多先打電話預訂',
     hours: '總店約 08:00–17:00',
     openHours: [['08:00', '17:00']],
+    price: { min: 250, max: 400, label: '每人' },
     coordinateSource: 'verified',
     coordinateNote: '1377 V. Rama Avenue, Guadalupe (from chillandtravel.com + OSM Nominatim)'
-  },
-  {
-    id: 'puso-village',
-    name: 'Puso Village',
-    googleQuery: 'Puso Village Cebu City',
-    lat: 10.2913,
-    lng: 123.9016,
-    area: 'cebu-city',
-    categories: ['puso', 'lechon', 'bbq'],
-    recommended: '戶外美食區：tuslob buwa、Carcar 風味烤乳豬、燒烤，用手吃',
-    hours: '約 10:00–22:00',
-    openHours: [['10:00', '22:00']],
-    coordinateSource: 'verified',
-    coordinateNote: 'OSM: Puso Village, M.L. Quezon Boulevard, Duljo Fatima'
-  },
-  {
-    id: 'larsian',
-    name: 'Larsian (Sugbo Sentro Fuente)',
-    googleQuery: 'Larsian BBQ Fuente Osmena Cebu',
-    lat: 10.3093,
-    lng: 123.8935,
-    area: 'cebu-city',
-    categories: ['bbq'],
-    recommended: '經典串燒街，自挑生肉串現烤，只收現金',
-    hours: '18:00–21:00 最熱鬧',
-    price: { min: 150, max: 300, label: '每人' },
-    coordinateSource: 'verified',
-    coordinateNote: 'OSM: Fuente Osmena Circle area'
   },
   {
     id: 'carlos-ngohiong',
@@ -208,10 +165,11 @@ export const places: Place[] = [
     lng: 123.9122027,
     area: 'cebu-city',
     categories: ['ngohiong-siomai'],
-    recommended: '老字號 ngohiong 專賣，重點是辣醬汁',
-    hours: '時間需確認',
+    recommended: '老字號 ngohiong 專賣，一條 ₱6–12，重點是濃稠的褐色醬汁。店小，適合午餐分批去或外帶',
+    hours: '約 09:00–15:00，週日可能休息（需確認）',
+    price: { min: 80, max: 150, label: '每人' },
     coordinateSource: 'verified',
-    coordinateNote: 'C. Borces Street branch, Mabolo (from keeta.ph + OSM Nominatim)'
+    coordinateNote: 'C. Borces Street branch behind Mabolo Church (from keeta.ph 2026 + OSM Nominatim)'
   },
   {
     id: 'way-tugpahay',
@@ -221,23 +179,125 @@ export const places: Place[] = [
     lng: 123.8706038,
     area: 'cebu-city',
     categories: ['ngohiong-siomai'],
-    recommended: '在地 Tisa 燒賣，配辣蒜醬',
-    hours: '24 小時（需確認）',
+    recommended: 'Tisa 是宿務的「燒賣之都」，這家路邊攤 10 顆約 ₱120，重點是辣蒜醬。晚上最熱鬧',
+    hours: '據說 24 小時（需確認）',
+    price: { min: 100, max: 200, label: '每人' },
     coordinateSource: 'verified',
-    coordinateNote: 'Katipunan Street, Tisa (from data file + OSM Nominatim)'
+    coordinateNote: '816 Katipunan Street, Tisa, near the barangay hall (foodpanda 2026 + OSM Nominatim)'
   },
   {
     id: 'carbon-market',
     name: 'Carbon Market',
     googleQuery: 'Carbon Market Cebu City',
-    lat: 10.2920,
-    lng: 123.8978,
+    lat: 10.2921,
+    lng: 123.8982,
     area: 'cebu-city',
     categories: ['market'],
-    recommended: '在地早餐 puto maya 配 sikwate，常加芒果',
-    hours: '約 05:00–17:00（需確認）',
+    recommended: 'puto maya（糯米飯）配 sikwate（熱巧克力）加芒果，攤位在 F. Calderon St 臨時市場旁。市場改建中，看緊隨身物品；Undas 前後人潮很多',
+    hours: '攤位約 17:00–05:00，清晨去最好',
+    price: { min: 50, max: 120, label: '每人' },
     coordinateSource: 'verified',
-    coordinateNote: 'OSM: Carbon Market, Cebu City'
+    coordinateNote: 'OSM: F. Calderon Street beside the Carbon Interim Public Market (stall cluster per cebuinsights.com 2025)'
+  },
+
+  {
+    id: 'esmen',
+    name: 'Esmen Carinderia',
+    googleQuery: 'Esmen Carinderia Pasil Cebu City',
+    lat: 10.2925,
+    lng: 123.8945,
+    area: 'cebu-city',
+    categories: ['local-dish', 'michelin'],
+    recommended: '1958 年開的老食堂，米其林必比登推薦。招牌 linarang 酸辣魚湯，柴火煮；不敢吃河豚類就點 mamsa（鰺魚）。店小，4–6 人一批',
+    hours: '約 06:00–14:00，中午前去（需確認）',
+    price: { min: 150, max: 350, label: '每人' },
+    coordinateSource: 'approximate',
+    coordinateNote: '10 F. Rallos Street, Pasil (SunStar 2025-11-14); not in OSM, placed on F. Rallos Street'
+  },
+  {
+    id: 'pungko-fuente',
+    name: 'Pungko-Pungko sa Fuente',
+    googleQuery: 'Pungko-Pungko sa Fuente J. Llorente Cebu City',
+    lat: 10.3112256,
+    lng: 123.8939639,
+    area: 'cebu-city',
+    categories: ['ngohiong-siomai', 'puso'],
+    recommended: '宿務的「蹲著吃」炸物攤：ginabot（炸豬腸膜）、炸豬肉、ngohiong 配 puso 和香料醋。自己拿，付錢時報數量，醋碗大家共用只沾一次',
+    hours: '06:00–22:00',
+    openHours: [['06:00', '22:00']],
+    price: { min: 80, max: 200, label: '每人' },
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM: "Punko Punko sa Fuente", J. Llorente Street, across from Apple Tree Suites (suroy.ph 2026)'
+  },
+  {
+    id: 'pares-batchoy',
+    name: 'Pares Batchoy Food House',
+    googleQuery: 'Pares Batchoy Food House C. Rodriguez Cebu City',
+    lat: 10.3101,
+    lng: 123.8903,
+    area: 'cebu-city',
+    categories: ['local-dish', 'michelin'],
+    recommended: '米其林必比登推薦的平價小店：燉牛肉麵 pares batchoy、酥炸 sinigang 酸湯。店小，4–6 人一批',
+    hours: '週一至六 09:00–21:00，週日休（需確認）',
+    price: { min: 200, max: 400, label: '每人' },
+    coordinateSource: 'approximate',
+    coordinateNote: '12 C. Rodriguez Street, Capitol Site (SunStar 2025-11-14); not in OSM, placed on C. Rodriguez Street'
+  },
+  {
+    id: 'abaseria',
+    name: 'Abaseria Deli & Cafe',
+    googleQuery: 'Abaseria Deli & Cafe Kasambagan Cebu City',
+    lat: 10.3263455,
+    lng: 123.9126818,
+    area: 'cebu-city',
+    categories: ['local-dish', 'michelin'],
+    recommended: '米其林必比登推薦，住宅區裡的家常菜餐廳：蝦 sinigang、humba（滷豬肉）、芒果冰盒蛋糕。座位舒服，8–15 人可以一起坐',
+    hours: '10:00–20:00（週日到 19:00，需確認）',
+    price: { min: 400, max: 700, label: '每人' },
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM: Abaseria Deli & Cafe, President Quirino Street, Villa Aurora, Kasambagan'
+  },
+  {
+    id: 'lasa',
+    name: 'Lasa',
+    googleQuery: 'Lasa Roosevelt Drive Busay Cebu City',
+    lat: 10.3705363,
+    lng: 123.8732321,
+    area: 'cebu-city',
+    categories: ['local-dish', 'michelin'],
+    recommended: '米其林必比登推薦，山上的開放式露台吃菲律賓經典菜。就在 Temple of Leah 旁邊，排景點日的午餐或晚餐剛好；電話 0966-183-0611',
+    hours: '約 11:00–22:00（需確認）',
+    price: { min: 500, max: 900, label: '每人' },
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM: "La•Sa", Roosevelt Drive, Busay (Michelin Guide 2026)'
+  },
+  {
+    id: 'pig-and-palm',
+    name: 'The Pig & Palm',
+    googleQuery: 'The Pig & Palm MSY Tower Cebu City',
+    lat: 10.3128747,
+    lng: 123.9043643,
+    area: 'cebu-city',
+    categories: ['michelin'],
+    recommended: '米其林必比登推薦，歐式小盤料理加菲律賓風味，招牌油封豬五花。比清單其他店貴，想吃一頓好的再來；先訂位 0917-657-6866',
+    hours: '週二至週日，約 11:00–23:00，週一休（需確認）',
+    price: { min: 1500, max: 2500, label: '每人' },
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM: The Pig & Palm, MSY Tower, Cebu Business Park (Michelin Guide 2026)'
+  },
+  {
+    id: 'cur8',
+    name: 'Cur8',
+    googleQuery: 'Cur8 Banilad Town Center Cebu City',
+    lat: 10.3409696,
+    lng: 123.9125683,
+    area: 'cebu-city',
+    categories: ['michelin'],
+    recommended: '米其林必比登推薦，主廚用新手法做亞洲經典菜。米其林特別推薦午間套餐，多道小份量很划算',
+    hours: '時間需確認',
+    price: { min: 500, max: 900, label: '每人' },
+    coordinateSource: 'verified',
+    coordinateNote: 'OSM: Banilad Town Center, Governor M. Cuenco Avenue (the restaurant is inside the mall; Michelin Guide 2026)'
   },
 
   // Sightseeing: hours and fees differ between sources, so they stay marked 需確認
@@ -373,7 +433,10 @@ export const glossary = [
   { term: 'Lechon', description: '宿務烤乳豬，皮脆、肉有香料味，不用沾醬' },
   { term: 'Puso', description: '椰葉包的米飯，配燒烤吃' },
   { term: 'Ngohiong', description: '宿務式五香炸春捲，配辣褐色醬汁' },
-  { term: 'Sutukil', description: '自選海鮮，選烤（sugba）、煮湯（tuwa）或生醃（kilaw）' },
+  { term: 'Sutukil', description: '自選海鮮，選烤（sugba）、煮湯（tuwa）或生醃（kilaw）。Mactan Shrine 旁的觀光海鮮街常被抱怨偏貴' },
+  { term: 'Linarang', description: '宿務的酸辣燉魚湯，用番茄、酸豆和黑豆調味' },
+  { term: 'Pungko-pungko', description: '「蹲著吃」的路邊炸物攤，配 puso 和香料醋' },
+  { term: 'Ginabot', description: '炸豬腸膜，外酥內軟，pungko-pungko 必點' },
   { term: 'Tuslob buwa', description: '冒泡的豬腦醬，拿 puso 下去沾' },
   { term: 'Siomai sa Tisa', description: '宿務在地燒賣，配辣蒜醬' },
   { term: 'Puto maya + sikwate', description: '糯米飯配濃熱巧克力，當地早餐' }
@@ -440,19 +503,23 @@ export const streetFoodTips = [
   '放在常溫的生醃和半熟海鮮要小心。',
   '喝瓶裝水，冰塊選工廠製、中間有洞的那種。',
   '帶濕紙巾和乾洗手，準備 ₱20–100 的小鈔，路邊攤大多只收現金。',
-  '搭紅眼航班前那一餐，避開生醃和路邊攤。'
+  '搭紅眼航班前那一餐，避開生醃和路邊攤。',
+  '店家的「每人」預算是依網路菜單和評論估的一餐大概花費，不含飲料和小費，出發前抓多一點。'
 ];
 
 export const sources = [
   { title: 'AA BBQ Soong', site: 'mactannow.com', url: 'https://www.mactannow.com/aa-bbq-soong/' },
   { title: "Ayer's Lechon", site: 'cebuayerslechon.com', url: 'https://www.cebuayerslechon.com/' },
   { title: 'Trillis 與 ngohiong 名店', site: 'keeta.ph', url: 'https://keeta.ph/good-ngohiong-is-never-far-in-cebu-here-are-five-places-to-prove-it/' },
-  { title: "Nonie's Barbecue", site: 'mactannow.com', url: 'https://www.mactannow.com/nonies-barbecue/' },
-  { title: 'Langging Fried Chicken', site: 'mactannow.com', url: 'https://www.mactannow.com/langging-fried-chicken/' },
-  { title: 'Lapu-Lapu City Public Market', site: 'airial.travel', url: 'https://airial.travel/attractions/philippines/lapu-lapu/lapu-lapu-city-public-market-wlRyrUbb' },
+  { title: 'Lapu-Lapu City Public Market', site: 'wanderlog.com', url: 'https://wanderlog.com/place/details/10214789/lapu-lapu-city-public-market' },
   { title: 'CnT Lechon 等宿務烤乳豬清單', site: 'chillandtravel.com', url: 'https://chillandtravel.com/cebu-lechon-food-list/' },
-  { title: 'Puso Village 指南', site: 'sugbo.ph', url: 'https://sugbo.ph/2025/your-guide-to-puso-village/' },
-  { title: 'Larsian BBQ 指南', site: 'cebudestinations.com', url: 'https://cebudestinations.com/guide/larsian-bbq-guide-fuente' },
+  { title: 'Esmen、Pares Batchoy 米其林必比登', site: 'sunstar.com.ph', url: 'https://www.sunstar.com.ph/cebu/cebus-comfort-food-michelin-rockstars' },
+  { title: 'Lasa', site: 'guide.michelin.com', url: 'https://guide.michelin.com/tw/en/central-visayas/cebu-city_2340421/restaurant/lasa-1241166' },
+  { title: 'The Pig & Palm', site: 'guide.michelin.com', url: 'https://guide.michelin.com/tw/zh_TW/central-visayas/cebu-city_2340421/restaurant/the-pig-palm' },
+  { title: 'Cur8', site: 'guide.michelin.com', url: 'https://guide.michelin.com/en/central-visayas/cebu-city_2340421/restaurant/cur8' },
+  { title: '宿務 2026 米其林完整名單', site: 'sunstar.com.ph', url: 'https://www.sunstar.com.ph/cebu/complete-list-michelin-guide-2026-awardees-in-cebu' },
+  { title: 'Pungko-Pungko sa Fuente', site: 'suroy.ph', url: 'https://suroy.ph/pungko-pungko-cebu-etiquette/' },
+  { title: "Entoy's Bakasihan 與 linarang", site: 'suroy.ph', url: 'https://suroy.ph/larang-cebu/' },
   { title: 'Way Tugpahay Siomai sa Tisa', site: 'foodpanda.ph', url: 'https://www.foodpanda.ph/restaurant/m6jh/way-tugpahay-siomai-sa-tisa-tisa' },
   { title: 'Carbon Market puto maya + sikwate', site: 'cebuinsights.com', url: 'https://cebuinsights.com/food/filipino-food/puto-sikwate-carbon-market/' },
   { title: 'Fort San Pedro 指南', site: '3d-universal.com', url: 'https://3d-universal.com/en/blogs/the-ultimate-guide-to-fort-san-pedro.html' },

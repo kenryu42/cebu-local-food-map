@@ -13,8 +13,8 @@ Interactive 3D map of authentic local eateries and sightseeing spots in Cebu, Ph
   - One-time Japan → Cebu globe intro, 🎲 random picker, and auto tour
 
 - **Food & Sightseeing Modes (🍴 美食 / 📸 景點)**
-  - 14 eateries and markets, 9 sightseeing spots, plus J Park and MCIA markers
-  - Food categories: Lechon, BBQ, Puso, Ngohiong/Siomai, Market
+  - 16 eateries and markets, including all six of Cebu's 2026 Michelin Bib Gourmand picks, 9 sightseeing spots, plus J Park and MCIA markers
+  - Food categories: 米其林必比登, Lechon, BBQ, Ngohiong/Siomai, 在地家常菜, Puso, Market
   - Sight categories: History, Churches & Temples, Viewpoints
 
 - **Smart Filters**
@@ -100,41 +100,18 @@ npm run build
 
 ## Coordinate Sources
 
-All locations geocoded using OpenStreetMap Nominatim API (Oct 27, 2026):
+Each place in `src/data.ts` records where its coordinates came from in `coordinateNote`. Most are
+exact OpenStreetMap matches. Three restaurants are not in OSM and are placed on their street, so
+their popups show ⚠️ 座標為區域參考位置: Trillis (Pusok), Esmen Carinderia and Pares Batchoy Food
+House. The Google Maps button navigates by name, so it still finds the right door.
 
-### Verified Coordinates (Exact OSM Match)
-- MCIA Airport: 10.3103, 123.9793
-- Carbon Market: 10.2920, 123.8978
-- Lapu-Lapu City Public Market: 10.3111, 123.9505
-- Fuente Osmena area: 10.3093, 123.8935
-- Mactan Newtown: 10.3085, 124.0130
-- Pusok area: 10.3245, 123.9743
-- Puso Village: 10.2913, 123.9016
-- JPark Island Resort & Waterpark: 10.28276, 123.99551 (OSM node "JPark resort")
+## How spots are chosen
 
-### Sightseeing (Exact OSM Match)
-- Magellan's Cross: 10.2935702, 123.9019584
-- Basilica del Santo Niño: 10.2943421, 123.9021033
-- Fort San Pedro: 10.2927283, 123.9058911
-- Yap-San Diego Ancestral House: 10.2992579, 123.9039722
-- Heritage of Cebu Monument: 10.2988934, 123.9036170
-- Mactan Shrine (Liberty Shrine): 10.3109738, 124.0151380
-- Temple of Leah: 10.3688795, 123.8733158
-- Cebu Taoist Temple: 10.3343184, 123.8879852
-- Sirao Flower Garden: 10.4070429, 123.8665474
-
-Sightseeing hours and entry fees differ between sources, so they are shown as approximate and marked 需確認.
-
-### Approximate Coordinates (Area-Based)
-These restaurants are not in the OSM database. Coordinates use nearby landmarks or area centers:
-- AA BBQ Soong: 10.310, 123.962 (Soong area reference)
-- Nonie's Barbecue: 10.315, 123.970 (Agus area reference)
-- Langging Fried Chicken: 10.312, 123.968 (Central Lapu-Lapu)
-- CnT Lechon: 10.315, 123.905 (North Cebu City)
-- Carlos Special Ngohiong: 10.305, 123.895 (Central Cebu City)
-- Way Tugpahay Siomai: 10.295, 123.895 (Tisa/Katipunan area)
-
-**Note:** Approximate coordinates are flagged with ⚠️ in popups. Use the Google Maps link for turn-by-turn navigation.
+The bar is good food at a fair price, not tourist traps. Spots were fact-checked in October 2026
+against recent local media (SunStar Cebu, Sugbo.ph, Suroy.ph, Keeta.ph) and the 2026 Michelin Guide
+Bib Gourmand list. Larsian (now Sugbo Sentro, reported run-down in 2025) and Puso Village (a new
+developer-built food hall) were dropped, as were Nonie's Barbecue and Langging Fried Chicken, which
+had nothing behind them but a directory listing.
 
 ## Phrase audio
 

@@ -14,6 +14,8 @@ const CATEGORY_META: Record<Category, { label: string; emoji: string; color: str
   'bbq': { label: 'BBQ 燒烤', emoji: '🍢', color: '#f08c00' },
   'puso': { label: 'Puso 椰葉飯', emoji: '🍚', color: '#2f9e44' },
   'ngohiong-siomai': { label: 'Ngohiong/Siomai', emoji: '🥟', color: '#c2850c' },
+  'local-dish': { label: '在地家常菜', emoji: '🍲', color: '#e64980' },
+  'michelin': { label: '米其林必比登', emoji: '🍽️', color: '#364fc7' },
   'market': { label: '市場', emoji: '🏪', color: '#7048e8' },
   'history': { label: '歷史古蹟', emoji: '🏛️', color: '#a0522d' },
   'temple': { label: '教堂寺廟', emoji: '⛪', color: '#1c7ed6' },
@@ -24,7 +26,7 @@ const CATEGORY_META: Record<Category, { label: string; emoji: string; color: str
 type Mode = 'food' | 'sight';
 const MODES: Record<Mode, { categories: Category[]; pick: string; tour: string; empty: string; burst: string[] }> = {
   food: {
-    categories: ['lechon', 'bbq', 'puso', 'ngohiong-siomai', 'market'],
+    categories: ['michelin', 'lechon', 'bbq', 'ngohiong-siomai', 'local-dish', 'puso', 'market'],
     pick: '今晚吃什麼？',
     tour: '美食巡禮',
     empty: '沒有符合的店家，換個篩選試試 🍽️',

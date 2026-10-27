@@ -71,7 +71,7 @@ Stable handles in this app (ids and data attributes, there are few ARIA names):
 - Markers `.marker` (`.is-hidden`, `.is-active`), tools `#view-toggle`, `#reset-view`, `#hotel-btn`
 - Picker `#roulette-btn`, overlay `#roulette` (`.won` when it lands), `#roulette-name`; tour `#tour-btn`, `#tour-bar`, `#tour-progress`, `#tour-stop`
 - Tabs `.tab[data-tab=list-panel|info-panel]`; converter `#php-input`, `#jpy-input`, `.quick-amounts button[data-php]`, `#rate-info`; hotel card `#hotel-card`, `#hotel-close`; toast `#toast.show`
-- Place ids are in `src/data.ts` (e.g. `aa-bbq`, `larsian`, `temple-of-leah`)
+- Place ids are in `src/data.ts` (e.g. `aa-bbq`, `pungko-fuente`, `temple-of-leah`)
 
 For any UI change, run the layout audit in every state you touch, on both viewports:
 

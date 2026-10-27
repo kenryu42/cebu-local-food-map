@@ -36,6 +36,10 @@ test('a peso range shows the yen equivalent rounded for quick reading', () => {
   assert.equal(formatPrice({ min: 150, max: 300, label: '每人' }, 2.463), '每人 ₱150–300（約 ¥370–740）');
 });
 
+test('prices of a thousand or more are grouped with commas', () => {
+  assert.equal(formatPrice({ min: 1500, max: 2500, label: '每人' }, 2.463), '每人 ₱1,500–2,500（約 ¥3,690–6,160）');
+});
+
 test('a single peso price shows one yen amount', () => {
   assert.equal(formatPrice({ min: 30, label: '門票' }, 2.463), '門票 ₱30（約 ¥74）');
 });

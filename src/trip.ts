@@ -52,8 +52,9 @@ function toYen(php: number, rate: number): number {
 
 export function formatPrice(price: Price, rate: number): string {
   if (price.min === 0 && !price.max) return `${price.label}免費`;
-  const peso = price.max ? `₱${price.min}–${price.max}` : `₱${price.min}`;
-  const yen = price.max ? `¥${toYen(price.min, rate)}–${toYen(price.max, rate)}` : `¥${toYen(price.min, rate)}`;
+  const n = (value: number) => value.toLocaleString('en-US');
+  const peso = price.max ? `₱${n(price.min)}–${n(price.max)}` : `₱${n(price.min)}`;
+  const yen = price.max ? `¥${n(toYen(price.min, rate))}–${n(toYen(price.max, rate))}` : `¥${n(toYen(price.min, rate))}`;
   return `${price.label} ${peso}（約 ${yen}）`;
 }
 

@@ -23,7 +23,7 @@ Preconditions:
 - **Spin.** Steps: `click '#roulette-btn' wait '#roulette:not([hidden])' 3000 screenshot picker-tour/01-spinning.png wait '#roulette.won' 10000 text '#roulette-name'`. The name is one of the visible food spots.
 - **Land.** Steps: `gone '#roulette' 8000 wait '.maplibregl-popup .popup-content' 15000 eval "location.hash"`. The hash is `#place=<the landed id>` and the popup title matches the name from Spin.
 - **Filtered pool.** Steps: `click '.chip[data-category="lechon"]' click '#roulette-btn' wait '#roulette.won' 10000 text '#roulette-name'`. Repeat a few times; every result is a lechon spot.
-- **Tour.** Steps: `click '#tour-btn' wait '#tour-bar:not([hidden])' 3000 text '#tour-progress' waitfor "document.querySelector('#tour-progress').textContent.includes(' 2/')" 15000`. Progress reads `美食巡禮 1/12 · …` then `2/12`.
+- **Tour.** Steps: `click '#tour-btn' wait '#tour-bar:not([hidden])' 3000 text '#tour-progress' waitfor "document.querySelector('#tour-progress').textContent.includes(' 2/')" 15000`. Progress reads `美食巡禮 1/16 · …` then `2/16`.
 - **Stop.** Steps: `click '#tour-stop' gone '#tour-bar' 3000`. The bar disappears and the camera stops moving.
 - **Proof.** Spinning and landed screenshots, the transcript with landed names and progress text, `--console picker-tour/console.log`.
 
