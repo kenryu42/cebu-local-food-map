@@ -2,97 +2,104 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="宿務在地人美食地圖 - 42人日本公司旅遊指南 (2026/10/28-11/1)" />
+    <meta name="theme-color" content="#ff5a36" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet" />
     <title>宿務在地美食 3D 地圖</title>
   </head>
   <body>
-    <div id="app">
-      <header>
-        <h1>🗺️ 宿務在地美食</h1>
-        <p class="subtitle">避開觀光店，宿務人自己會去吃的店</p>
-        <p class="trip-info">📅 2026/10/28–11/1 | 👥 42人 | 🏨 J Park Island Resort</p>
-      </header>
+    <div id="map"></div>
 
-      <div class="container">
-        <aside class="sidebar">
-          <!-- Filters -->
-          <section class="filter-section">
-            <h3>地區</h3>
-            <label class="filter-label">
-              <input type="checkbox" name="area" value="mactan" />
-              <span>麥克坦島</span>
-            </label>
-            <label class="filter-label">
-              <input type="checkbox" name="area" value="cebu-city" />
-              <span>宿務市區</span>
-            </label>
-          </section>
-
-          <section class="filter-section">
-            <h3>類別</h3>
-            <label class="filter-label">
-              <input type="checkbox" name="category" value="lechon" />
-              <span>🐷 Lechon 烤乳豬</span>
-            </label>
-            <label class="filter-label">
-              <input type="checkbox" name="category" value="bbq" />
-              <span>🍢 BBQ 燒烤</span>
-            </label>
-            <label class="filter-label">
-              <input type="checkbox" name="category" value="puso" />
-              <span>🍚 Puso 椰葉飯</span>
-            </label>
-            <label class="filter-label">
-              <input type="checkbox" name="category" value="ngohiong-siomai" />
-              <span>🥟 Ngohiong/Siomai</span>
-            </label>
-            <label class="filter-label">
-              <input type="checkbox" name="category" value="market" />
-              <span>🏪 市場</span>
-            </label>
-          </section>
-
-          <!-- Tabs -->
-          <div class="tabs">
-            <button class="tab active" data-tab="list-panel">清單</button>
-            <button class="tab" data-tab="info-panel">資訊</button>
-          </div>
-
-          <!-- List Panel -->
-          <div id="list-panel" class="tab-panel active">
-            <div id="place-list"></div>
-          </div>
-
-          <!-- Info Panel -->
-          <div id="info-panel" class="tab-panel">
-            <div class="info-section">
-              <h4>在地美食名詞</h4>
-              <div id="glossary-content"></div>
-            </div>
-
-            <div class="info-section">
-              <h4>路邊攤小提醒</h4>
-              <div id="tips-content"></div>
-            </div>
-
-            <div class="info-section callout">
-              <strong>⚠️ Undas 連假提醒</strong>
-              <p>10/31 (六) 是 Undas 連假第一天，從麥克坦島去市區可能要 90 分鐘以上。市區的店最好排在前幾天。小店可能提早關門，出發前先確認。</p>
-            </div>
-
-            <div class="info-section">
-              <h4>店家介紹文章</h4>
-              <div id="sources-content"></div>
-            </div>
-          </div>
-        </aside>
-
-        <main class="map-container">
-          <div id="map"></div>
-        </main>
+    <!-- Opening title card, shown during the intro flight -->
+    <div id="intro" class="intro" aria-hidden="true">
+      <div class="intro-inner">
+        <p class="intro-kicker">日本 ✈︎ 宿務 · 2026/10/28–11/1</p>
+        <h1 class="intro-title"><span>宿務</span><span>在地</span><span>美食</span></h1>
+        <p class="intro-sub">避開觀光店，宿務人自己會去吃的店</p>
+        <p class="intro-skip">點一下跳過</p>
       </div>
     </div>
+
+    <aside id="panel" class="panel">
+      <button id="sheet-handle" class="sheet-handle" aria-label="展開或收合清單"><span></span></button>
+
+      <header class="panel-header">
+        <h1>🗺️ 宿務在地美食</h1>
+        <p class="trip-info">📅 10/28–11/1 · 👥 42人 · 🏨 J Park Island Resort</p>
+      </header>
+
+      <div class="actions">
+        <button id="roulette-btn" class="action action-primary">🎲 今晚吃什麼？</button>
+        <button id="tour-btn" class="action">▶ 美食巡禮</button>
+      </div>
+
+      <div class="filters">
+        <div class="segmented" role="radiogroup" aria-label="地區">
+          <button class="seg active" data-area="all">全部</button>
+          <button class="seg" data-area="mactan">麥克坦島</button>
+          <button class="seg" data-area="cebu-city">宿務市區</button>
+        </div>
+        <div id="category-chips" class="chips"></div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="list-panel">清單</button>
+        <button class="tab" data-tab="info-panel">資訊</button>
+      </div>
+
+      <div class="panel-body">
+        <div id="list-panel" class="tab-panel active">
+          <div id="place-list"></div>
+        </div>
+
+        <div id="info-panel" class="tab-panel">
+          <div class="info-section callout">
+            <strong>⚠️ Undas 連假提醒</strong>
+            <p>10/31 (六) 是 Undas 連假第一天，從麥克坦島去市區可能要 90 分鐘以上。市區的店最好排在前幾天。小店可能提早關門，出發前先確認。</p>
+          </div>
+
+          <div class="info-section">
+            <h4>在地美食名詞</h4>
+            <div id="glossary-content"></div>
+          </div>
+
+          <div class="info-section">
+            <h4>路邊攤小提醒</h4>
+            <div id="tips-content"></div>
+          </div>
+
+          <div class="info-section">
+            <h4>店家介紹文章</h4>
+            <div id="sources-content"></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="map-tools">
+      <button id="view-toggle" class="tool" title="切換 2D / 3D">2D</button>
+      <button id="reset-view" class="tool" title="回到全覽">⤢</button>
+    </div>
+
+    <!-- Slot-machine picker -->
+    <div id="roulette" class="roulette" hidden>
+      <div class="roulette-card">
+        <p class="roulette-label">今晚吃什麼？</p>
+        <div class="roulette-window"><div id="roulette-name" class="roulette-name"></div></div>
+        <p id="roulette-desc" class="roulette-desc"></p>
+      </div>
+    </div>
+
+    <div id="tour-bar" class="tour-bar" hidden>
+      <span id="tour-progress"></span>
+      <button id="tour-stop" class="tour-stop">■ 停止巡禮</button>
+    </div>
+
+    <div id="burst" class="burst" aria-hidden="true"></div>
 
     <script type="module" src="/src/main.ts"></script>
   </body>

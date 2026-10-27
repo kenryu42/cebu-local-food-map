@@ -1,177 +1,65 @@
 import './style.css';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+// MapLibre finds its worker relative to its own module URL, which neither Vite's
+// dev prebundle nor the production build preserves, so ship it as an asset.
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
+import type { Feature, LineString } from 'geojson';
 import { places, glossary, streetFoodTips, sources, type Place, type Category, type Area } from './data';
+
+const CATEGORY_META: Record<Category, { label: string; emoji: string; color: string }> = {
+  'lechon': { label: 'Lechon 烤乳豬', emoji: '🐷', color: '#e8432e' },
+  'bbq': { label: 'BBQ 燒烤', emoji: '🍢', color: '#f08c00' },
+  'puso': { label: 'Puso 椰葉飯', emoji: '🍚', color: '#2f9e44' },
+  'ngohiong-siomai': { label: 'Ngohiong/Siomai', emoji: '🥟', color: '#c2850c' },
+  'market': { label: '市場', emoji: '🏪', color: '#7048e8' },
+  'lodging': { label: '住宿', emoji: '🏨', color: '#0c8599' },
+  'airport': { label: '機場', emoji: '✈️', color: '#495057' }
+};
+const FOOD_CATEGORIES: Category[] = ['lechon', 'bbq', 'puso', 'ngohiong-siomai', 'market'];
+const BURST_EMOJI = ['🐷', '🍢', '🍚', '🥟', '🦐', '🥥', '🥭', '🔥', '🌴', '✨'];
+
+const JAPAN: [number, number] = [139.7, 35.68];
+const HOME = { pitch: 50, bearing: -12 };
+const jpark = places.find(p => p.id === 'jpark')!;
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const mobileQuery = window.matchMedia('(max-width: 768px)');
+
+// The globe flight pulls map tiles for every view on the way, so only play it once,
+// and never on Data Saver or slow (roaming) connections.
+const INTRO_SEEN_KEY = 'cebu-food-map:intro-seen';
+const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+const slowNetwork = Boolean(connection?.saveData) || /2g/.test(connection?.effectiveType ?? '');
+function introSeen(): boolean {
+  try { return localStorage.getItem(INTRO_SEEN_KEY) === '1'; } catch { return false; }
+}
+const playFlight = !reducedMotion && !slowNetwork && !introSeen() && !new URLSearchParams(location.search).has('skip-intro');
+
+maplibregl.setWorkerUrl(workerUrl);
 
 // State
 let map: maplibregl.Map;
-let markers: Map<string, maplibregl.Marker> = new Map();
-let activeFilters = {
-  areas: new Set<Area>(['mactan', 'cebu-city']),
-  categories: new Set<Category>()
-};
+const markers = new Map<string, maplibregl.Marker>();
+const popup = new maplibregl.Popup({ offset: [0, -46], maxWidth: '300px', focusAfterOpen: false });
+let activeArea: Area | 'all' = 'all';
+const activeCategories = new Set<Category>();
+let activeId: string | null = null;
+let is3D = true;
+let selection = 0; // bumps on every new selection so stale flights don't open popups
+let orbitFrame = 0;
+let tourRunning = false;
 
-// Initialize map
-function initMap() {
-  map = new maplibregl.Map({
-    container: 'map',
-    style: {
-      version: 8,
-      sources: {
-        'openmaptiles': {
-          type: 'raster',
-          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-          tileSize: 256,
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        },
-        'terrain': {
-          type: 'raster-dem',
-          tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
-          encoding: 'terrarium',
-          tileSize: 256
-        }
-      },
-      layers: [
-        {
-          id: 'background',
-          type: 'background',
-          paint: { 'background-color': '#f8f8f8' }
-        },
-        {
-          id: 'raster',
-          type: 'raster',
-          source: 'openmaptiles',
-          paint: { 'raster-opacity': 1 }
-        }
-      ]
-    },
-    center: [123.96, 10.30],
-    zoom: 11,
-    pitch: 45,
-    bearing: 0
-  });
-
-  map.addControl(new maplibregl.NavigationControl(), 'top-right');
-  map.addControl(new maplibregl.ScaleControl(), 'bottom-right');
-
-  map.on('load', () => {
-    // Add 3D terrain
-    map.addSource('terrain-source', {
-      type: 'raster-dem',
-      tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
-      encoding: 'terrarium',
-      tileSize: 256,
-      maxzoom: 14
-    });
-    
-    map.setTerrain({ source: 'terrain-source', exaggeration: 1.5 });
-
-    // Add 3D buildings
-    map.addLayer({
-      id: 'buildings',
-      type: 'fill-extrusion',
-      source: {
-        type: 'vector',
-        url: 'https://demotiles.maplibre.org/tiles/tiles.json'
-      },
-      'source-layer': 'building',
-      paint: {
-        'fill-extrusion-color': '#aaa',
-        'fill-extrusion-height': ['get', 'render_height'],
-        'fill-extrusion-base': ['get', 'render_min_height'],
-        'fill-extrusion-opacity': 0.6
-      }
-    });
-
-    addMarkers();
-    updateList();
-  });
-}
-
-// Create marker HTML with color coding
-function createMarkerElement(place: Place): HTMLElement {
-  const el = document.createElement('div');
-  el.className = 'custom-marker';
-  
-  let color = '#3b82f6'; // blue
-  if (place.categories.includes('lechon')) color = '#ef4444'; // red
-  else if (place.categories.includes('bbq')) color = '#f59e0b'; // orange
-  else if (place.categories.includes('market')) color = '#8b5cf6'; // purple
-  else if (place.categories.includes('lodging')) color = '#10b981'; // green
-  else if (place.categories.includes('airport')) color = '#6b7280'; // gray
-  
-  el.innerHTML = `
-    <div style="
-      background: ${color};
-      width: 32px;
-      height: 32px;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      border: 2px solid white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    ">
-      <span style="transform: rotate(45deg); font-size: 18px;">
-        ${place.categories.includes('lodging') ? '🏨' : 
-          place.categories.includes('airport') ? '✈️' :
-          place.categories.includes('market') ? '🏪' : '🍴'}
-      </span>
-    </div>
-  `;
-  
-  return el;
-}
-
-// Create popup content
-function createPopupContent(place: Place): string {
-  const jparkCoord = [123.9974, 10.2848];
-  const distance = calculateDistance(
-    jparkCoord[1], jparkCoord[0],
-    place.lat, place.lng
-  );
-  
-  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.googleQuery)}`;
-  
-  return `
-    <div class="popup-content">
-      <h3>${place.name}</h3>
-      ${place.recommended ? `<p class="recommended">${place.recommended}</p>` : ''}
-      ${place.distance ? `<p class="info">${place.distance}</p>` : ''}
-      ${place.hours ? `<p class="info">${place.hours}</p>` : ''}
-      <p class="info">距離 J Park: ${distance.toFixed(1)} km</p>
-      <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="maps-link">
-        🗺️ Google Maps 導航
-      </a>
-      ${place.coordinateSource === 'approximate' ? 
-        `<p class="coord-note">⚠️ 座標為區域參考位置</p>` : ''}
-    </div>
-  `;
-}
-
-// Add markers to map
-function addMarkers() {
-  places.forEach(place => {
-    const el = createMarkerElement(place);
-    const popup = new maplibregl.Popup({ offset: 25 })
-      .setHTML(createPopupContent(place));
-    
-    const marker = new maplibregl.Marker({ element: el })
-      .setLngLat([place.lng, place.lat])
-      .setPopup(popup)
-      .addTo(map);
-    
-    markers.set(place.id, marker);
-  });
-}
+const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
+const primary = (place: Place) => CATEGORY_META[place.categories[0]];
+const isFood = (place: Place) => place.area !== 'landmark';
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Calculate distance between two coordinates (km)
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth's radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
+  const a =
     Math.sin(dLat/2) * Math.sin(dLat/2) +
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
     Math.sin(dLon/2) * Math.sin(dLon/2);
@@ -179,189 +67,641 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-// Filter places
-function getFilteredPlaces(): Place[] {
-  return places.filter(place => {
-    // Always show landmarks
-    if (place.area === 'landmark') return true;
-    
-    // Check area filter
-    if (!activeFilters.areas.has(place.area)) return false;
-    
-    // Check category filter (if any categories selected)
-    if (activeFilters.categories.size > 0) {
-      const hasCategory = place.categories.some(cat => 
-        activeFilters.categories.has(cat)
-      );
-      if (!hasCategory) return false;
-    }
-    
-    return true;
+const distanceFromJpark = (place: Place) => calculateDistance(jpark.lat, jpark.lng, place.lat, place.lng);
+
+type SheetState = 'peek' | 'half' | 'full';
+let sheetState: SheetState = 'half';
+
+// Visible height of the bottom sheet per state; mirrors --sheet-* in style.css
+function sheetHeight(state: SheetState): number {
+  const vh = window.innerHeight;
+  return state === 'peek' ? 168 : state === 'half' ? vh * 0.5 : vh * 0.88;
+}
+
+// Keep the camera's focus clear of the bottom sheet (phone) or floating panel (desktop).
+// Computed from state, not measured, so it is right while the sheet is still sliding.
+function cameraPadding(): maplibregl.PaddingOptions {
+  if (mobileQuery.matches) {
+    const bottom = Math.min(sheetHeight(sheetState), window.innerHeight - 220) + 16;
+    return { top: 90, bottom, left: 24, right: 24 };
+  }
+  return { top: 80, bottom: 80, left: 460, right: 90 };
+}
+
+function flyAndWait(options: maplibregl.FlyToOptions & { padding?: maplibregl.PaddingOptions }): Promise<void> {
+  return new Promise(resolve => {
+    map.once('moveend', () => resolve());
+    if (reducedMotion) map.jumpTo(options);
+    else map.flyTo(options);
   });
 }
 
-// Update marker visibility
-function updateMarkers() {
-  const filtered = new Set(getFilteredPlaces().map(p => p.id));
+// Initialize map
+function initMap() {
+  map = new maplibregl.Map({
+    container: 'map',
+    center: playFlight ? JAPAN : [123.955, 10.302],
+    zoom: playFlight ? 2.2 : 11,
+    maxPitch: 75,
+    attributionControl: false
+  });
+
+  map.setStyle('https://tiles.openfreemap.org/styles/liberty', {
+    transformStyle: (_previous, style) => ({
+      ...style,
+      layers: style.layers.map(layer => {
+        // Road-shield filters compare ref_length <= 6, which warns on roads that have no ref
+        const filter = 'filter' in layer ? JSON.stringify(layer.filter) : '';
+        if (!filter.includes('["<=",["get","ref_length"],6]')) return layer;
+        return {
+          ...layer,
+          filter: JSON.parse(filter.replace('["get","ref_length"]', '["to-number",["coalesce",["get","ref_length"],99]]'))
+        };
+      })
+    })
+  });
+
+  // The style references a few POI icons its sprite doesn't ship; draw them as nothing
+  map.setMissingStyleImageResolver(id => {
+    if (!map.hasImage(id)) map.addImage(id, { width: 1, height: 1, data: new Uint8Array(4) });
+  });
+
+  // Phones pinch to zoom; the compass alone is enough to reset rotation there
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true, showZoom: !mobileQuery.matches }), 'top-right');
+  map.addControl(new maplibregl.GeolocateControl({ trackUserLocation: true }), 'top-right');
+  // Top corner, because the bottom sheet covers the bottom of the map on phones
+  map.addControl(new maplibregl.AttributionControl({ compact: true }), 'top-right');
   
+  map.on('load', () => {
+    // Compact attribution starts expanded; keep it collapsed to the ⓘ button
+    document.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
+    map.setProjection({ type: 'globe' });
+    map.setSky({ 'sky-color': '#7cc6f2', 'horizon-color': '#ffe8cc', 'fog-color': '#fff4e6', 'sky-horizon-blend': 0.6, 'atmosphere-blend': 0.8 });
+
+    map.addSource('terrain-source', {
+      type: 'raster-dem',
+      tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+      encoding: 'terrarium',
+      tileSize: 256,
+      maxzoom: 14
+    });
+
+    // Warm, sunlit buildings instead of the default grey
+    map.setPaintProperty('building-3d', 'fill-extrusion-color', [
+      'interpolate', ['linear'], ['get', 'render_height'],
+      0, '#f6e7d4', 25, '#f2c99d', 70, '#ee9a63', 150, '#e8684a'
+    ]);
+    map.setPaintProperty('building-3d', 'fill-extrusion-opacity', 0.9);
+
+    map.addSource('route', { type: 'geojson', data: lineFeature([]) });
+    map.addLayer({
+      id: 'route-glow', type: 'line', source: 'route',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#ff5a36', 'line-width': 12, 'line-opacity': 0.18, 'line-blur': 6 }
+    });
+    map.addLayer({
+      id: 'route-line', type: 'line', source: 'route',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#ff5a36', 'line-width': 3.5, 'line-dasharray': [0.1, 2] }
+    });
+
+    addMarkers();
+    updateList();
+    playIntro();
+  });
+
+  // Any hands-on interaction hands the camera back to the user
+  for (const type of ['mousedown', 'touchstart', 'wheel'] as const) {
+    map.on(type, () => {
+      stopOrbit();
+      if (tourRunning) stopTour();
+    });
+  }
+}
+
+// Camera that frames every visible spot (plus J Park) on this screen size
+function overviewCamera(): maplibregl.CameraOptions {
+  const visible = getFilteredPlaces().filter(isFood);
+  const bounds = new maplibregl.LngLatBounds();
+  visible.forEach(p => bounds.extend([p.lng, p.lat]));
+  if (visible.length === 0 || activeArea !== 'cebu-city') bounds.extend([jpark.lng, jpark.lat]);
+  const pitch = is3D ? HOME.pitch : 0;
+  const bearing = is3D ? HOME.bearing : 0;
+  const camera = map.cameraForBounds(bounds, { padding: cameraPadding(), pitch, bearing, maxZoom: 14.5 });
+  return { ...camera, pitch, bearing };
+}
+
+// ---------- Intro: fly from Japan down to Cebu ----------
+
+async function playIntro() {
+  const intro = $('#intro');
+  if (!playFlight) {
+    map.jumpTo(overviewCamera());
+    finishIntro();
+    return;
+  }
+
+  let skipped = false;
+  intro.addEventListener('click', () => {
+    skipped = true;
+    map.stop();
+    map.jumpTo(overviewCamera());
+    finishIntro();
+  }, { once: true });
+
+  intro.classList.add('playing');
+  await wait(900);
+  if (skipped) return;
+  animateRoute(JAPAN, [jpark.lng, jpark.lat], 5200, 0.18);
+  await flyAndWait({ ...overviewCamera(), duration: 7000, curve: 1.6, essential: true });
+  if (!skipped) finishIntro();
+}
+
+function finishIntro() {
+  try { localStorage.setItem(INTRO_SEEN_KEY, '1'); } catch { /* private mode: replay next time */ }
+  $('#intro').classList.add('done');
+  document.body.classList.add('ready');
+  // The globe is only for the flight in; terrain doesn't support it, so go flat before adding terrain
+  map.setProjection({ type: 'mercator' });
+  map.setTerrain({ source: 'terrain-source', exaggeration: 1.3 });
+  clearRoute();
+  updateMarkers();
+}
+
+// ---------- Route arc from J Park ----------
+
+function lineFeature(coordinates: [number, number][]): Feature<LineString> {
+  return { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates } };
+}
+
+function arcPoints(from: [number, number], to: [number, number], bend: number): [number, number][] {
+  const [x1, y1] = from;
+  const [x2, y2] = to;
+  // Quadratic bezier with the control point pushed sideways off the midpoint
+  const cx = (x1 + x2) / 2 - (y2 - y1) * bend;
+  const cy = (y1 + y2) / 2 + (x2 - x1) * bend;
+  const points: [number, number][] = [];
+  for (let i = 0; i <= 80; i++) {
+    const t = i / 80;
+    const u = 1 - t;
+    points.push([u * u * x1 + 2 * u * t * cx + t * t * x2, u * u * y1 + 2 * u * t * cy + t * t * y2]);
+  }
+  return points;
+}
+
+let routeFrame = 0;
+function animateRoute(from: [number, number], to: [number, number], duration: number, bend = 0.3) {
+  const source = map.getSource<maplibregl.GeoJSONSource>('route');
+  if (!source) return;
+  cancelAnimationFrame(routeFrame);
+  const points = arcPoints(from, to, bend);
+  if (reducedMotion) {
+    source.setData(lineFeature(points));
+    return;
+  }
+  const start = performance.now();
+  const step = (now: number) => {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    source.setData(lineFeature(points.slice(0, Math.max(2, Math.ceil(eased * points.length)))));
+    if (t < 1) routeFrame = requestAnimationFrame(step);
+  };
+  routeFrame = requestAnimationFrame(step);
+}
+
+function clearRoute() {
+  cancelAnimationFrame(routeFrame);
+  map.getSource<maplibregl.GeoJSONSource>('route')?.setData(lineFeature([]));
+}
+
+// ---------- Camera orbit around the selected place ----------
+
+function startOrbit() {
+  if (reducedMotion || !is3D) return;
+  stopOrbit();
+  let last = performance.now();
+  const step = (now: number) => {
+    map.setBearing(map.getBearing() + (now - last) * 0.004);
+    last = now;
+    orbitFrame = requestAnimationFrame(step);
+  };
+  orbitFrame = requestAnimationFrame(step);
+}
+
+function stopOrbit() {
+  cancelAnimationFrame(orbitFrame);
+  orbitFrame = 0;
+}
+
+// ---------- Markers ----------
+
+function createMarkerElement(place: Place): HTMLElement {
+  const meta = primary(place);
+  const el = document.createElement('div');
+  el.className = 'marker is-hidden';
+  el.style.setProperty('--c', meta.color);
+  el.innerHTML = `
+    <div class="marker-pin"><span>${meta.emoji}</span></div>
+    <div class="marker-label">${place.name}</div>
+  `;
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    selectPlace(place.id);
+  });
+  el.addEventListener('mouseenter', () => setHover(place.id, true));
+  el.addEventListener('mouseleave', () => setHover(place.id, false));
+  return el;
+}
+
+function addMarkers() {
+  places.forEach(place => {
+    const marker = new maplibregl.Marker({ element: createMarkerElement(place), anchor: 'bottom' })
+      .setLngLat([place.lng, place.lat])
+      .addTo(map);
+    markers.set(place.id, marker);
+  });
+}
+
+function updateMarkers() {
+  const visible = new Set(getFilteredPlaces().map(p => p.id));
+  let order = 0;
   markers.forEach((marker, id) => {
     const el = marker.getElement();
-    if (filtered.has(id)) {
-      el.style.display = 'block';
-    } else {
-      el.style.display = 'none';
-    }
+    const show = visible.has(id);
+    if (show && el.classList.contains('is-hidden')) el.style.setProperty('--delay', `${order++ * 45}ms`);
+    el.classList.toggle('is-hidden', !show);
   });
 }
 
-// Update list view
-function updateList() {
-  const listEl = document.getElementById('place-list')!;
-  const filtered = getFilteredPlaces();
-  
-  // Separate by area
-  const mactanPlaces = filtered.filter(p => p.area === 'mactan');
-  const cebuPlaces = filtered.filter(p => p.area === 'cebu-city');
-  const landmarks = filtered.filter(p => p.area === 'landmark');
-  
-  listEl.innerHTML = '';
-  
-  if (landmarks.length > 0) {
-    listEl.innerHTML += '<div class="list-section"><h4>地標</h4></div>';
-    landmarks.forEach(place => {
-      listEl.innerHTML += createListItem(place);
-    });
-  }
-  
-  if (mactanPlaces.length > 0) {
-    listEl.innerHTML += '<div class="list-section"><h4>麥克坦島</h4></div>';
-    mactanPlaces.forEach(place => {
-      listEl.innerHTML += createListItem(place);
-    });
-  }
-  
-  if (cebuPlaces.length > 0) {
-    listEl.innerHTML += '<div class="list-section"><h4>宿務市區</h4></div>';
-    cebuPlaces.forEach(place => {
-      listEl.innerHTML += createListItem(place);
-    });
-  }
-  
-  // Add click handlers
-  document.querySelectorAll('.list-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const id = item.getAttribute('data-id')!;
-      flyToPlace(id);
-    });
-  });
+function setHover(id: string, on: boolean) {
+  markers.get(id)?.getElement().classList.toggle('is-hover', on);
+  document.querySelector(`.list-item[data-id="${id}"]`)?.classList.toggle('is-hover', on);
 }
 
-// Create list item HTML
-function createListItem(place: Place): string {
+// ---------- Selecting a place ----------
+
+function createPopupContent(place: Place): string {
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.googleQuery)}`;
+  const tags = place.categories
+    .map(c => `<span class="tag" style="--c:${CATEGORY_META[c].color}">${CATEGORY_META[c].emoji} ${CATEGORY_META[c].label}</span>`)
+    .join('');
+  const distance = place.id === 'jpark' ? '' : `<p class="info">📍 距離 J Park ${distanceFromJpark(place).toFixed(1)} km${place.distance ? `（${place.distance}）` : ''}</p>`;
+
   return `
-    <div class="list-item" data-id="${place.id}">
-      <div class="list-item-name">${place.name}</div>
-      ${place.recommended ? 
-        `<div class="list-item-desc">${place.recommended}</div>` : ''}
+    <div class="popup-content">
+      <div class="tags">${tags}</div>
+      <h3>${place.name}</h3>
+      ${place.recommended ? `<p class="recommended">${place.recommended}</p>` : ''}
+      ${place.hours ? `<p class="info">⏰ ${place.hours}</p>` : ''}
+      ${distance}
+      <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="maps-link">🧭 Google Maps 導航</a>
+      ${place.coordinateSource === 'approximate' ? `<p class="coord-note">⚠️ 座標為區域參考位置</p>` : ''}
     </div>
   `;
 }
 
-// Fly to place on map
-function flyToPlace(id: string) {
+async function selectPlace(id: string, { orbit = true } = {}) {
   const place = places.find(p => p.id === id);
   if (!place) return;
-  
-  map.flyTo({
+  const token = ++selection;
+
+  stopOrbit();
+  popup.remove();
+  setActive(id);
+  if (mobileQuery.matches) setSheet('peek');
+
+  if (place.id !== 'jpark') animateRoute([jpark.lng, jpark.lat], [place.lng, place.lat], 1400);
+  else clearRoute();
+
+  await flyAndWait({
     center: [place.lng, place.lat],
-    zoom: 15,
-    pitch: 60,
-    duration: 2000
+    zoom: 16.2,
+    pitch: is3D ? 62 : 0,
+    bearing: is3D ? map.getBearing() - 40 : 0,
+    // Extra headroom on phones so the popup above the pin clears the map buttons
+    padding: mobileQuery.matches ? { ...cameraPadding(), top: 240 } : cameraPadding(),
+    duration: 2600,
+    curve: 1.4,
+    essential: true
   });
-  
-  // Open popup
-  const marker = markers.get(id);
-  if (marker) {
-    marker.togglePopup();
+  if (token !== selection) return;
+
+  popup.setLngLat([place.lng, place.lat]).setHTML(createPopupContent(place)).addTo(map);
+  if (orbit) startOrbit();
+}
+
+function setActive(id: string | null) {
+  activeId = id;
+  markers.forEach((marker, markerId) => marker.getElement().classList.toggle('is-active', markerId === id));
+  document.querySelectorAll('.list-item').forEach(item => {
+    const match = item.getAttribute('data-id') === id;
+    item.classList.toggle('is-active', match);
+    if (match) item.scrollIntoView({ block: 'nearest', behavior: reducedMotion ? 'auto' : 'smooth' });
+  });
+}
+
+function clearSelection() {
+  selection++;
+  stopOrbit();
+  popup.remove();
+  clearRoute();
+  setActive(null);
+}
+
+popup.on('close', () => {
+  stopOrbit();
+  if (activeId) {
+    clearRoute();
+    setActive(null);
+  }
+});
+
+// ---------- Filters ----------
+
+function placesInArea(): Place[] {
+  return places.filter(p => p.area === 'landmark' || activeArea === 'all' || p.area === activeArea);
+}
+
+function getFilteredPlaces(): Place[] {
+  return placesInArea().filter(place =>
+    place.area === 'landmark' ||
+    activeCategories.size === 0 ||
+    place.categories.some(cat => activeCategories.has(cat))
+  );
+}
+
+function applyFilters({ refit = false } = {}) {
+  updateMarkers();
+  updateList();
+  updateChips();
+  if (activeId && !getFilteredPlaces().some(p => p.id === activeId)) clearSelection();
+  if (refit) fitToVisible();
+}
+
+function fitToVisible() {
+  stopOrbit();
+  map.flyTo({ ...overviewCamera(), duration: reducedMotion ? 0 : 1800, essential: true });
+}
+
+function initFilters() {
+  document.querySelectorAll<HTMLButtonElement>('.seg').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeArea = btn.dataset.area as Area | 'all';
+      document.querySelectorAll('.seg').forEach(b => b.classList.toggle('active', b === btn));
+      clearSelection();
+      applyFilters({ refit: true });
+    });
+  });
+
+  const chips = $('#category-chips');
+  chips.innerHTML = FOOD_CATEGORIES.map(cat => `
+    <button class="chip" data-category="${cat}" style="--c:${CATEGORY_META[cat].color}">
+      <span>${CATEGORY_META[cat].emoji} ${CATEGORY_META[cat].label}</span><b class="chip-count"></b>
+    </button>
+  `).join('');
+  chips.querySelectorAll<HTMLButtonElement>('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const cat = chip.dataset.category as Category;
+      if (activeCategories.has(cat)) activeCategories.delete(cat);
+      else activeCategories.add(cat);
+      applyFilters();
+    });
+  });
+  updateChips();
+}
+
+function updateChips() {
+  const inArea = placesInArea().filter(isFood);
+  document.querySelectorAll<HTMLButtonElement>('.chip').forEach(chip => {
+    const cat = chip.dataset.category as Category;
+    chip.classList.toggle('active', activeCategories.has(cat));
+    chip.querySelector('.chip-count')!.textContent = String(inArea.filter(p => p.categories.includes(cat)).length);
+  });
+}
+
+// ---------- List ----------
+
+function createListItem(place: Place, index: number): string {
+  const meta = primary(place);
+  const distance = place.id === 'jpark' ? '' : `<span>📍 ${distanceFromJpark(place).toFixed(1)} km</span>`;
+  return `
+    <button class="list-item${place.id === activeId ? ' is-active' : ''}" data-id="${place.id}" style="--c:${meta.color};--i:${index}">
+      <span class="list-badge">${meta.emoji}</span>
+      <span class="list-text">
+        <span class="list-item-name">${place.name}</span>
+        ${place.recommended ? `<span class="list-item-desc">${place.recommended}</span>` : ''}
+        <span class="list-meta">${place.hours ? `<span>⏰ ${place.hours}</span>` : ''}${distance}</span>
+      </span>
+    </button>
+  `;
+}
+
+function updateList() {
+  const filtered = getFilteredPlaces();
+  const groups: [string, Place[]][] = [
+    ['麥克坦島', filtered.filter(p => p.area === 'mactan')],
+    ['宿務市區', filtered.filter(p => p.area === 'cebu-city')],
+    ['地標', filtered.filter(p => p.area === 'landmark')]
+  ];
+
+  let index = 0;
+  $('#place-list').innerHTML = groups
+    .filter(([, group]) => group.length > 0)
+    .map(([title, group]) => `
+      <div class="list-section"><h4>${title}</h4><span>${group.length}</span></div>
+      ${group.map(place => createListItem(place, index++)).join('')}
+    `).join('') || '<p class="empty">沒有符合的店家，換個篩選試試 🍽️</p>';
+
+  document.querySelectorAll<HTMLElement>('.list-item').forEach(item => {
+    const id = item.dataset.id!;
+    item.addEventListener('click', () => {
+      if (tourRunning) stopTour();
+      selectPlace(id);
+    });
+    item.addEventListener('mouseenter', () => setHover(id, true));
+    item.addEventListener('mouseleave', () => setHover(id, false));
+  });
+}
+
+// ---------- 🎲 Roulette ----------
+
+async function spinRoulette() {
+  const pool = getFilteredPlaces().filter(isFood);
+  if (pool.length === 0) return;
+  if (tourRunning) stopTour();
+  clearSelection();
+
+  const winner = pool[Math.floor(Math.random() * pool.length)];
+  const overlay = $('#roulette');
+  const nameEl = $('#roulette-name');
+  const descEl = $('#roulette-desc');
+  const btn = $<HTMLButtonElement>('#roulette-btn');
+  btn.disabled = true;
+  overlay.hidden = false;
+  overlay.classList.remove('won');
+  descEl.textContent = '';
+
+  const ticks = reducedMotion ? 1 : 22;
+  const startIndex = Math.floor(Math.random() * pool.length);
+  for (let i = 0; i < ticks; i++) {
+    // Land exactly on the winner at the final tick
+    const place = i === ticks - 1 ? winner : pool[(startIndex + i) % pool.length];
+    nameEl.textContent = `${primary(place).emoji} ${place.name}`;
+    nameEl.classList.remove('tick');
+    void nameEl.offsetWidth;
+    nameEl.classList.add('tick');
+    markers.forEach((m, id) => m.getElement().classList.toggle('is-hover', id === place.id));
+    if (i < ticks - 1) await wait(45 + i * i * 1.1);
+  }
+
+  overlay.classList.add('won');
+  descEl.textContent = winner.recommended ?? '';
+  burst();
+  await wait(reducedMotion ? 600 : 1500);
+
+  overlay.hidden = true;
+  btn.disabled = false;
+  markers.forEach(m => m.getElement().classList.remove('is-hover'));
+  selectPlace(winner.id);
+}
+
+function burst() {
+  if (reducedMotion) return;
+  const container = $('#burst');
+  for (let i = 0; i < 34; i++) {
+    const span = document.createElement('span');
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 140 + Math.random() * 260;
+    span.textContent = BURST_EMOJI[i % BURST_EMOJI.length];
+    span.style.setProperty('--x', `${Math.cos(angle) * dist}px`);
+    span.style.setProperty('--y', `${Math.sin(angle) * dist - 80}px`);
+    span.style.setProperty('--r', `${Math.random() * 720 - 360}deg`);
+    span.style.setProperty('--s', `${0.8 + Math.random() * 0.9}`);
+    span.style.animationDelay = `${Math.random() * 120}ms`;
+    container.appendChild(span);
+    span.addEventListener('animationend', () => span.remove());
   }
 }
 
-// Initialize filters
-function initFilters() {
-  // Area filters
-  document.querySelectorAll<HTMLInputElement>('input[name="area"]').forEach(input => {
-    input.checked = activeFilters.areas.has(input.value as Area);
-    input.addEventListener('change', () => {
-      if (input.checked) {
-        activeFilters.areas.add(input.value as Area);
-      } else {
-        activeFilters.areas.delete(input.value as Area);
-      }
-      updateMarkers();
-      updateList();
-    });
-  });
-  
-  // Category filters
-  document.querySelectorAll<HTMLInputElement>('input[name="category"]').forEach(input => {
-    input.addEventListener('change', () => {
-      if (input.checked) {
-        activeFilters.categories.add(input.value as Category);
-      } else {
-        activeFilters.categories.delete(input.value as Category);
-      }
-      updateMarkers();
-      updateList();
-    });
-  });
+// ---------- ▶ Tour ----------
+
+async function startTour() {
+  const stops = getFilteredPlaces().filter(isFood);
+  if (stops.length === 0) return;
+  clearSelection();
+  tourRunning = true;
+  $('#tour-bar').hidden = false;
+  document.body.classList.add('touring');
+
+  for (let i = 0; i < stops.length && tourRunning; i++) {
+    $('#tour-progress').textContent = `巡禮中 ${i + 1}/${stops.length} · ${stops[i].name}`;
+    await selectPlace(stops[i].id, { orbit: false });
+    if (!tourRunning) return;
+    startOrbit();
+    await wait(4200);
+  }
+  if (tourRunning) {
+    stopTour();
+    clearSelection();
+    fitToVisible();
+  }
 }
 
-// Initialize info panel
+function stopTour() {
+  tourRunning = false;
+  stopOrbit();
+  $('#tour-bar').hidden = true;
+  document.body.classList.remove('touring');
+}
+
+// ---------- View controls ----------
+
+function initViewControls() {
+  const toggle = $('#view-toggle');
+  toggle.addEventListener('click', () => {
+    is3D = !is3D;
+    toggle.textContent = is3D ? '2D' : '3D';
+    map.setLayoutProperty('building-3d', 'visibility', is3D ? 'visible' : 'none');
+    if (is3D) map.setTerrain({ source: 'terrain-source', exaggeration: 1.3 });
+    else map.setTerrain(null);
+    stopOrbit();
+    map.easeTo({ pitch: is3D ? 60 : 0, bearing: is3D ? map.getBearing() - 20 : 0, duration: reducedMotion ? 0 : 1200 });
+  });
+
+  $('#reset-view').addEventListener('click', () => {
+    if (tourRunning) stopTour();
+    clearSelection();
+    fitToVisible();
+  });
+
+  $('#roulette-btn').addEventListener('click', spinRoulette);
+  $('#tour-btn').addEventListener('click', () => (tourRunning ? stopTour() : startTour()));
+  $('#tour-stop').addEventListener('click', stopTour);
+}
+
+// ---------- Mobile bottom sheet ----------
+
+const SHEET_ORDER: SheetState[] = ['peek', 'half', 'full'];
+
+function setSheet(state: SheetState) {
+  sheetState = state;
+  $('#panel').dataset.sheet = state;
+}
+
+function initSheet() {
+  const panel = $('#panel');
+  setSheet('half');
+  $('#sheet-handle').addEventListener('click', () => {
+    setSheet(sheetState === 'peek' ? 'half' : sheetState === 'half' ? 'full' : 'peek');
+  });
+
+  let startY = 0;
+  const header = panel.querySelector<HTMLElement>('.panel-header')!;
+  for (const el of [$('#sheet-handle'), header]) {
+    el.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive: true });
+    el.addEventListener('touchend', e => {
+      const dy = e.changedTouches[0].clientY - startY;
+      if (Math.abs(dy) < 40) return;
+      const current = SHEET_ORDER.indexOf(sheetState);
+      setSheet(SHEET_ORDER[Math.max(0, Math.min(2, current + (dy < 0 ? 1 : -1)))]);
+    });
+  }
+}
+
+// ---------- Info panel & tabs ----------
+
 function initInfoPanel() {
-  const glossaryEl = document.getElementById('glossary-content')!;
-  glossaryEl.innerHTML = glossary.map(item => `
-    <div class="glossary-item">
-      <strong>${item.term}</strong>: ${item.description}
-    </div>
+  $('#glossary-content').innerHTML = glossary.map(item => `
+    <div class="glossary-item"><strong>${item.term}</strong><span>${item.description}</span></div>
   `).join('');
-  
-  const tipsEl = document.getElementById('tips-content')!;
-  tipsEl.innerHTML = '<ul>' + streetFoodTips.map(tip => `
-    <li>${tip}</li>
-  `).join('') + '</ul>';
-  
-  const sourcesEl = document.getElementById('sources-content')!;
-  sourcesEl.innerHTML = sources.map(source => `
-    <div class="source-link">
-      <a href="${source.url}" target="_blank" rel="noopener noreferrer">
-        ${source.title} <span class="source-site">(${source.site})</span>
-      </a>
-    </div>
+
+  $('#tips-content').innerHTML = '<ul>' + streetFoodTips.map(tip => `<li>${tip}</li>`).join('') + '</ul>';
+
+  $('#sources-content').innerHTML = sources.map(source => `
+    <a class="source-link" href="${source.url}" target="_blank" rel="noopener noreferrer">
+      ${source.title} <span class="source-site">${source.site} ↗</span>
+    </a>
   `).join('');
 }
 
-// Tab switching
 function initTabs() {
   const tabs = document.querySelectorAll('.tab');
   const panels = document.querySelectorAll('.tab-panel');
-  
+
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      const target = tab.getAttribute('data-tab')!;
-      
-      tabs.forEach(t => t.classList.remove('active'));
-      panels.forEach(p => p.classList.remove('active'));
-      
-      tab.classList.add('active');
-      document.getElementById(target)!.classList.add('active');
+      tabs.forEach(t => t.classList.toggle('active', t === tab));
+      panels.forEach(p => p.classList.toggle('active', p.id === tab.getAttribute('data-tab')));
     });
   });
 }
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
-  initMap();
+  initSheet();
   initFilters();
   initInfoPanel();
   initTabs();
+  initViewControls();
+  initMap();
 });
