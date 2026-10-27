@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="宿務在地人美食地圖 - 42人日本公司旅遊指南 (2026/10/28-11/1)" />
+    <title>宿務在地美食 3D 地圖</title>
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>🗺️ 宿務在地美食</h1>
+        <p class="subtitle">避開觀光店，宿務人自己會去吃的店</p>
+        <p class="trip-info">📅 2026/10/28–11/1 | 👥 42人 | 🏨 J Park Island Resort</p>
+      </header>
+
+      <div class="container">
+        <aside class="sidebar">
+          <!-- Filters -->
+          <section class="filter-section">
+            <h3>地區</h3>
+            <label class="filter-label">
+              <input type="checkbox" name="area" value="mactan" />
+              <span>麥克坦島</span>
+            </label>
+            <label class="filter-label">
+              <input type="checkbox" name="area" value="cebu-city" />
+              <span>宿務市區</span>
+            </label>
+          </section>
+
+          <section class="filter-section">
+            <h3>類別</h3>
+            <label class="filter-label">
+              <input type="checkbox" name="category" value="lechon" />
+              <span>🐷 Lechon 烤乳豬</span>
+            </label>
+            <label class="filter-label">
+              <input type="checkbox" name="category" value="bbq" />
+              <span>🍢 BBQ 燒烤</span>
+            </label>
+            <label class="filter-label">
+              <input type="checkbox" name="category" value="puso" />
+              <span>🍚 Puso 椰葉飯</span>
+            </label>
+            <label class="filter-label">
+              <input type="checkbox" name="category" value="ngohiong-siomai" />
+              <span>🥟 Ngohiong/Siomai</span>
+            </label>
+            <label class="filter-label">
+              <input type="checkbox" name="category" value="market" />
+              <span>🏪 市場</span>
+            </label>
+          </section>
+
+          <!-- Tabs -->
+          <div class="tabs">
+            <button class="tab active" data-tab="list-panel">清單</button>
+            <button class="tab" data-tab="info-panel">資訊</button>
+          </div>
+
+          <!-- List Panel -->
+          <div id="list-panel" class="tab-panel active">
+            <div id="place-list"></div>
+          </div>
+
+          <!-- Info Panel -->
+          <div id="info-panel" class="tab-panel">
+            <div class="info-section">
+              <h4>在地美食名詞</h4>
+              <div id="glossary-content"></div>
+            </div>
+
+            <div class="info-section">
+              <h4>路邊攤小提醒</h4>
+              <div id="tips-content"></div>
+            </div>
+
+            <div class="info-section callout">
+              <strong>⚠️ Undas 連假提醒</strong>
+              <p>10/31 (六) 是 Undas 連假第一天，從麥克坦島去市區可能要 90 分鐘以上。市區的店最好排在前幾天。小店可能提早關門，出發前先確認。</p>
+            </div>
+
+            <div class="info-section">
+              <h4>店家介紹文章</h4>
+              <div id="sources-content"></div>
+            </div>
+          </div>
+        </aside>
+
+        <main class="map-container">
+          <div id="map"></div>
+        </main>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
