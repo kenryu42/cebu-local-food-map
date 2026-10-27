@@ -913,11 +913,47 @@ async function refreshRate() {
 
 function initHotelCard() {
   const modal = $('#hotel-card');
-  const close = () => { modal.hidden = true; };
+  const card = modal.querySelector<HTMLElement>('.hotel-card')!;
+  const close = () => {
+    modal.hidden = true;
+    card.style.transition = card.style.transform = '';
+  };
   for (const btn of [$('#hotel-btn'), $('#quick-hotel')]) btn.addEventListener('click', () => { modal.hidden = false; });
   $('#hotel-close').addEventListener('click', close);
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });
+
+  // Swipe down to dismiss: the card follows the finger, closes past 80px, else springs back.
+  // Only from the top of the card, so dragging down inside scrolled content still scrolls.
+  let startY = 0;
+  let dy = 0;
+  let dragging = false;
+  card.addEventListener('touchstart', e => {
+    dragging = card.scrollTop <= 0;
+    startY = e.touches[0].clientY;
+    dy = 0;
+  }, { passive: true });
+  card.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    dy = Math.max(0, e.touches[0].clientY - startY);
+    if (!dy) return;
+    e.preventDefault(); // no page bounce while the card is held
+    card.style.transition = 'none';
+    card.style.transform = `translateY(${dy}px)`;
+  }, { passive: false });
+  card.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    if (dy <= 80) {
+      card.style.transition = 'transform 0.3s var(--ease-out)';
+      card.style.transform = '';
+      return;
+    }
+    if (reducedMotion) return close();
+    card.style.transition = 'transform 0.25s ease-in';
+    card.style.transform = 'translateY(100%)';
+    card.addEventListener('transitionend', close, { once: true });
+  });
 }
 
 // ---------- Info panel & tabs ----------
