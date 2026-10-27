@@ -914,7 +914,7 @@ async function refreshRate() {
 function initHotelCard() {
   const modal = $('#hotel-card');
   const close = () => { modal.hidden = true; };
-  for (const btn of [$('#hotel-btn'), $('#sheet-hotel')]) btn.addEventListener('click', () => { modal.hidden = false; });
+  for (const btn of [$('#hotel-btn'), $('#quick-hotel')]) btn.addEventListener('click', () => { modal.hidden = false; });
   $('#hotel-close').addEventListener('click', close);
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });

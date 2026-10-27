@@ -64,13 +64,13 @@ Keep one journey in one invocation: the phone viewport, `--geo` and permission g
 
 Stable handles in this app (ids and data attributes, there are few ARIA names):
 
-- Sheet: `#panel[data-sheet=peek|full]` (full covers the whole screen), handle `#sheet-handle`, the full sheet's 🏨 `#sheet-hotel`, header `.panel-header`
+- Sheet: `#panel[data-sheet=peek|full]` (full covers the whole screen), handle `#sheet-handle`, header `.panel-header`
 - Modes `.mode[data-mode=food|sight]`, area `.seg[data-area=all|mactan|cebu-city]`, chips `.chip[data-category=<id>]`, sort `.sort[data-sort=area|near]`
 - List `.list-item[data-id=<place id>]`, section titles `.list-section h4`, badges `.open-badge.open|closing-soon|closed`, prices `.list-price`
 - Popup `.maplibregl-popup .popup-content`, its `.maps-link` and `.share-btn`, close `.maplibregl-popup-close-button`
 - Markers `.marker` (`.is-hidden`, `.is-active`), tools `#view-toggle`, `#reset-view`, `#hotel-btn`
 - Picker `#roulette-btn`, overlay `#roulette` (`.won` when it lands), `#roulette-name`; tour `#tour-btn`, `#tour-bar`, `#tour-progress`, `#tour-stop`
-- Tabs `.tab[data-tab=list-panel|info-panel]`; converter `#php-input`, `#jpy-input`, `.quick-amounts button[data-php]`, `#rate-info`; hotel card `#hotel-card`, `#hotel-close`; toast `#toast.show`
+- Tabs `.tab[data-tab=list-panel|info-panel]`; converter `#php-input`, `#jpy-input`, `.quick-amounts button[data-php]`, `#rate-info`; hotel card `#hotel-card` (opened by map `#hotel-btn` or the actions row `#quick-hotel`), `#hotel-close`; toast `#toast.show`
 - Place ids are in `src/data.ts` (e.g. `aa-bbq`, `pungko-fuente`, `temple-of-leah`)
 
 For any UI change, run the layout audit in every state you touch, on both viewports:

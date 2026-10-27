@@ -166,26 +166,6 @@ body.ready .panel[data-sheet="full"] {
   background: var(--cream);
 }
 
-/* The full sheet covers the map's 🏨 button, so it brings its own in the handle row.
-   .tool.sheet-hotel outranks the later .tool sizes so it fits the 44px row above the header. */
-.tool.sheet-hotel {
-  position: absolute;
-  top: calc(4px + env(safe-area-inset-top));
-  right: 12px;
-  width: 40px;
-  height: 36px;
-  border-radius: 12px;
-  font-size: 18px;
-  box-shadow: none;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s, visibility 0.3s, transform 0.3s var(--ease-spring);
-}
-
-.sheet-hotel::before { content: ''; position: absolute; inset: -4px; }
-
-body.ready .panel[data-sheet="full"] .sheet-hotel { opacity: 1; visibility: visible; }
-
 .sheet-handle {
   display: grid;
   place-items: center;
@@ -254,7 +234,8 @@ body.ready .panel[data-sheet="full"] .sheet-hotel { opacity: 1; visibility: visi
 
 .actions {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  /* The 🏨 card is what people grab when a taxi pulls up, so it sits with the actions on every sheet state */
+  grid-template-columns: 1.4fr 1fr 48px;
   gap: 10px;
   padding: 0 16px 12px;
 }
@@ -271,6 +252,13 @@ body.ready .panel[data-sheet="full"] .sheet-hotel { opacity: 1; visibility: visi
 }
 
 .action:active { transform: scale(0.95); }
+
+.action-hotel {
+  padding: 0;
+  font-size: 22px;
+  background: linear-gradient(135deg, #2bb5b5, var(--sea));
+  box-shadow: var(--shadow);
+}
 .action:disabled { opacity: 0.6; }
 
 .action-primary {
@@ -1412,7 +1400,7 @@ body.ready .map-tools {
 
   body.ready .panel[data-sheet] { transform: none; padding-top: 0; border-radius: 24px; background: var(--glass); }
 
-  .sheet-handle, .sheet-hotel { display: none; }
+  .sheet-handle { display: none; }
 
   .panel-header { padding: 20px 20px 12px; }
   .panel-header h1 { font-size: 22px; }
