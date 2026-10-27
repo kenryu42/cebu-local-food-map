@@ -43,5 +43,5 @@ Keep implementation details out of the map. Name only user paths, stable handles
 - [First visit and intro](./first-visit.md) covers the one-time Japan → Cebu flight, skipping it, and the overview it lands on.
 - [Select a spot](./select-place.md) covers opening a spot from the list, a map pin, or a shared link, the popup contents, sharing, and closing.
 - [Modes, filters and sorting](./modes-filters.md) covers 美食 / 景點, area and category filters, and 離我最近.
-- [Picker and tour](./picker-tour.md) covers 🎲 今晚吃什麼 / 去哪裡玩 and ▶ 巡禮.
+- [Picker](./picker.md) covers 🎲 今晚吃什麼 / 去哪裡玩.
 - [Trip tools](./trip-tools.md) covers the ₱ ⇄ ¥ converter, the 🏨 hotel and emergency card, phrases, and the 2D / overview tools.

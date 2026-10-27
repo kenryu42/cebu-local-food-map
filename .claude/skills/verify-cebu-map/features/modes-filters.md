@@ -1,11 +1,11 @@
 # Modes, filters and sorting
 
-The 🍴 美食 / 📸 景點 switch picks which spots the map, list, chips, picker and tour use; the hotel and airport show in both. The area toggle (全部 / 麥克坦島 / 宿務市區) and category chips narrow the spots and reframe the map, chips show counts, and the list can be sorted by area or by distance from the visitor (📍 離我最近).
+The 🍴 美食 / 📸 景點 switch picks which spots the map, list, chips and picker use; the hotel and airport show in both. The area toggle (全部 / 麥克坦島 / 宿務市區) and category chips narrow the spots and reframe the map, chips show counts, and the list can be sorted by area or by distance from the visitor (📍 離我最近).
 
 ## Sub-features
 
 - `mode-food` food spots with 米其林必比登 / Lechon / BBQ / Ngohiong / 在地家常菜 / Puso / 市場 chips.
-- `mode-sight` sights with 歷史古蹟 / 教堂寺廟 / 山景拍照 chips; picker and tour labels change.
+- `mode-sight` sights with 歷史古蹟 / 教堂寺廟 / 山景拍照 chips; the picker label changes.
 - `mode-opens-sheet` on phones, tapping either mode opens the sheet fully so the list is in view.
 - `area-filter` 麥克坦島 / 宿務市區 hide the other area's spots and refit the map.
 - `category-chips` toggling chips narrows the list and pins; counts reflect the area.

@@ -236,7 +236,7 @@ body.ready .panel[data-sheet="full"] {
   display: grid;
   /* The exchange icon and 🏨 are what people reach for at a stall or when a taxi pulls up, so they sit with
      the actions on every sheet state */
-  grid-template-columns: 1fr auto 48px 48px;
+  grid-template-columns: 1fr 48px 48px;
   gap: 10px;
   padding: 0 16px 12px;
 }
@@ -277,12 +277,6 @@ body.ready .panel[data-sheet="full"] {
   background: linear-gradient(135deg, #ff7a45, var(--accent) 55%, #f03e6e);
   box-shadow: 0 8px 20px -6px rgb(255 90 54 / 0.7);
   animation: wiggle 6s ease-in-out 4s infinite;
-}
-
-body.touring #tour-btn {
-  color: #fff;
-  background: var(--sea);
-  box-shadow: 0 8px 20px -6px rgb(15 163 163 / 0.7);
 }
 
 @keyframes wiggle {
@@ -713,8 +707,7 @@ body.ready .map-tools {
 
 /* Compact controls keep a larger invisible hit area around them */
 .chip::before,
-.sort::before,
-.tour-stop::before {
+.sort::before {
   content: '';
   position: absolute;
   inset: -4px -2px;
@@ -1017,50 +1010,6 @@ body.ready .map-tools {
     transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) + 120px)) rotate(var(--r)) scale(var(--s));
     opacity: 0;
   }
-}
-
-/* ---------- Tour bar ---------- */
-
-.tour-bar {
-  position: fixed;
-  top: calc(12px + env(safe-area-inset-top));
-  left: 70px;
-  right: 70px;
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 16px;
-  font-size: 13px;
-  font-weight: 700;
-  text-align: center;
-  color: #fff;
-  background: rgb(15 163 163 / 0.92);
-  box-shadow: var(--shadow-lg);
-  animation: popup-in 0.4s var(--ease-spring);
-}
-
-.tour-bar[hidden] { display: none; }
-
-#tour-progress {
-  overflow: hidden;
-  max-width: 100%;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tour-stop {
-  position: relative;
-  flex-shrink: 0;
-  white-space: nowrap;
-  min-height: 40px;
-  padding: 0 16px;
-  border-radius: 99px;
-  font-size: 13px;
-  font-weight: 700;
-  background: rgb(255 255 255 / 0.22);
 }
 
 /* ---------- Currency converter ---------- */
@@ -1421,19 +1370,6 @@ body.ready .map-tools {
   }
 
   .map-tools { left: 432px; top: 16px; }
-
-  .tour-bar {
-    left: 50%;
-    right: auto;
-    top: 16px;
-    flex-direction: row;
-    gap: 14px;
-    padding: 8px 8px 8px 18px;
-    transform: translateX(calc(-50% + 216px));
-    animation: none;
-  }
-
-  #tour-progress { max-width: 420px; }
 
   .sheet-modal { align-items: center; }
 

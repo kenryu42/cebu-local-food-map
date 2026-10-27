@@ -1,6 +1,6 @@
 ---
 name: verify-cebu-map
-description: Drive the real Cebu food & sightseeing map (宿務美食景點, a Vite + MapLibre web app) in an isolated headless Chrome at phone size and capture proof. Use to confirm a UI change works the way a colleague on a phone would use it — selecting spots, modes and filters, the 🎲 picker and tour, share links, the converter and hotel card — or to reproduce a reported bug before fixing it.
+description: Drive the real Cebu food & sightseeing map (宿務美食景點, a Vite + MapLibre web app) in an isolated headless Chrome at phone size and capture proof. Use to confirm a UI change works the way a colleague on a phone would use it — selecting spots, modes and filters, the 🎲 picker, share links, the converter and hotel card — or to reproduce a reported bug before fixing it.
 ---
 
 # Verify the Cebu map
@@ -69,7 +69,7 @@ Stable handles in this app (ids and data attributes, there are few ARIA names):
 - List `.list-item[data-id=<place id>]`, section titles `.list-section h4`, badges `.open-badge.open|closing-soon|closed`, prices `.list-price`
 - Popup `.maplibregl-popup .popup-content`, its `.maps-link` and `.share-btn`, close `.maplibregl-popup-close-button`
 - Markers `.marker` (`.is-hidden`, `.is-active`), tools `#view-toggle`, `#reset-view`, `#hotel-btn`
-- Picker `#roulette-btn`, overlay `#roulette` (`.won` when it lands), `#roulette-name`; tour `#tour-btn`, `#tour-bar`, `#tour-progress`, `#tour-stop`
+- Picker `#roulette-btn`, overlay `#roulette` (`.won` when it lands), `#roulette-name`
 - Tabs `.tab[data-tab=list-panel|info-panel]`; converter card `#fx-card` (opened by the actions row `#quick-fx`) with `#php-input`, `#jpy-input`, `.quick-amounts button[data-php]`, `#rate-info`; hotel card `#hotel-card` (opened by map `#hotel-btn` or the actions row `#quick-hotel`); both cards close by `swipe '.sheet-card' down`, the backdrop or Escape (no × button); toast `#toast.show`
 - Place ids are in `src/data.ts` (e.g. `aa-bbq`, `pungko-fuente`, `temple-of-leah`)
 

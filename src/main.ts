@@ -24,18 +24,16 @@ const CATEGORY_META: Record<Category, { label: string; emoji: string; color: str
   'airport': { label: '機場', emoji: '✈️', color: '#495057' }
 };
 type Mode = 'food' | 'sight';
-const MODES: Record<Mode, { categories: Category[]; pick: string; tour: string; empty: string; burst: string[] }> = {
+const MODES: Record<Mode, { categories: Category[]; pick: string; empty: string; burst: string[] }> = {
   food: {
     categories: ['michelin', 'lechon', 'bbq', 'ngohiong-siomai', 'local-dish', 'puso', 'market'],
     pick: '今晚吃什麼？',
-    tour: '美食巡禮',
     empty: '沒有符合的店家，換個篩選試試 🍽️',
     burst: ['🐷', '🍢', '🍚', '🥟', '🦐', '🥥', '🥭', '🔥', '🌴', '✨']
   },
   sight: {
     categories: ['history', 'temple', 'viewpoint'],
     pick: '去哪裡玩？',
-    tour: '景點巡禮',
     empty: '沒有符合的景點，換個篩選試試 📸',
     burst: ['⛪', '🏛️', '🌄', '🌺', '📸', '🌴', '🗿', '✨']
   }
@@ -85,7 +83,6 @@ let activeId: string | null = null;
 let is3D = true;
 let selection = 0; // bumps on every new selection so stale flights don't open popups
 let orbitFrame = 0;
-let tourRunning = false;
 let sortMode: 'area' | 'near' = 'area';
 let userPos: { lat: number; lng: number } | null = null;
 
@@ -244,10 +241,7 @@ function initMap() {
 
   // Any hands-on interaction hands the camera back to the user
   for (const type of ['mousedown', 'touchstart', 'wheel'] as const) {
-    map.on(type, () => {
-      stopOrbit();
-      if (tourRunning) stopTour();
-    });
+    map.on(type, stopOrbit);
   }
 }
 
@@ -474,7 +468,7 @@ function setUrlPlace(id: string | null) {
   history.replaceState(null, '', url);
 }
 
-async function selectPlace(id: string, { orbit = true } = {}) {
+async function selectPlace(id: string) {
   const place = places.find(p => p.id === id);
   if (!place) return;
   const token = ++selection;
@@ -503,7 +497,7 @@ async function selectPlace(id: string, { orbit = true } = {}) {
   if (token !== selection) return;
 
   showPopup(place);
-  if (orbit) startOrbit();
+  startOrbit();
 }
 
 function setActive(id: string | null) {
@@ -587,7 +581,6 @@ function initFilters() {
 
   document.querySelectorAll<HTMLButtonElement>('.mode').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (tourRunning) stopTour();
       clearSelection();
       setMode(btn.dataset.mode as Mode);
       // On phones, open the sheet fully so the mode's list is what the visitor sees
@@ -673,10 +666,7 @@ function updateList() {
 
   document.querySelectorAll<HTMLElement>('.list-item').forEach(item => {
     const id = item.dataset.id!;
-    item.addEventListener('click', () => {
-      if (tourRunning) stopTour();
-      selectPlace(id);
-    });
+    item.addEventListener('click', () => selectPlace(id));
     item.addEventListener('mouseenter', () => setHover(id, true));
     item.addEventListener('mouseleave', () => setHover(id, false));
   });
@@ -687,7 +677,6 @@ function updateList() {
 async function spinRoulette() {
   const pool = getFilteredPlaces().filter(isSpot);
   if (pool.length === 0) return;
-  if (tourRunning) stopTour();
   clearSelection();
 
   const winner = pool[Math.floor(Math.random() * pool.length)];
@@ -743,37 +732,6 @@ function burst() {
   }
 }
 
-// ---------- ▶ Tour ----------
-
-async function startTour() {
-  const stops = getFilteredPlaces().filter(isSpot);
-  if (stops.length === 0) return;
-  clearSelection();
-  tourRunning = true;
-  $('#tour-bar').hidden = false;
-  document.body.classList.add('touring');
-
-  for (let i = 0; i < stops.length && tourRunning; i++) {
-    $('#tour-progress').textContent = `${MODES[mode].tour} ${i + 1}/${stops.length} · ${stops[i].name}`;
-    await selectPlace(stops[i].id, { orbit: false });
-    if (!tourRunning) return;
-    startOrbit();
-    await wait(4200);
-  }
-  if (tourRunning) {
-    stopTour();
-    clearSelection();
-    fitToVisible();
-  }
-}
-
-function stopTour() {
-  tourRunning = false;
-  stopOrbit();
-  $('#tour-bar').hidden = true;
-  document.body.classList.remove('touring');
-}
-
 // ---------- View controls ----------
 
 function initViewControls() {
@@ -789,14 +747,11 @@ function initViewControls() {
   });
 
   $('#reset-view').addEventListener('click', () => {
-    if (tourRunning) stopTour();
     clearSelection();
     fitToVisible();
   });
 
   $('#roulette-btn').addEventListener('click', spinRoulette);
-  $('#tour-btn').addEventListener('click', () => (tourRunning ? stopTour() : startTour()));
-  $('#tour-stop').addEventListener('click', stopTour);
 }
 
 // ---------- Mobile bottom sheet ----------

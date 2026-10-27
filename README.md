@@ -10,7 +10,7 @@ Interactive 3D map of authentic local eateries and sightseeing spots in Cebu, Ph
   - Tilted 3D view with terrain and building extrusions
   - Free vector tiles (OpenFreeMap) - no API keys required
   - Touch-optimized for mobile devices
-  - One-time Japan → Cebu globe intro, 🎲 random picker, and auto tour
+  - One-time Japan → Cebu globe intro, and 🎲 random picker
 
 - **Food & Sightseeing Modes (🍴 美食 / 📸 景點)**
   - 16 eateries and markets, including all six of Cebu's 2026 Michelin Bib Gourmand picks, 9 sightseeing spots, plus J Park and MCIA markers
