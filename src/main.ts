@@ -24,16 +24,18 @@ const CATEGORY_META: Record<Category, { label: string; emoji: string; color: str
   'airport': { label: '機場', emoji: '✈️', color: '#495057' }
 };
 type Mode = 'food' | 'sight';
-const MODES: Record<Mode, { categories: Category[]; pick: string; empty: string; burst: string[] }> = {
+const MODES: Record<Mode, { categories: Category[]; pick: string; unit: string; empty: string; burst: string[] }> = {
   food: {
     categories: ['michelin', 'lechon', 'bbq', 'ngohiong-siomai', 'local-dish', 'puso', 'market'],
     pick: '今晚吃什麼？',
+    unit: '家',
     empty: '沒有符合的店家，換個篩選試試 🍽️',
     burst: ['🐷', '🍢', '🍚', '🥟', '🦐', '🥥', '🥭', '🔥', '🌴', '✨']
   },
   sight: {
     categories: ['history', 'temple', 'viewpoint'],
     pick: '去哪裡玩？',
+    unit: '個',
     empty: '沒有符合的景點，換個篩選試試 📸',
     burst: ['⛪', '🏛️', '🌄', '🌺', '📸', '🌴', '🗿', '✨']
   }
@@ -435,6 +437,24 @@ function createPopupContent(place: Place): string {
         <button class="share-btn" aria-label="分享這個地點">🔗 分享</button>
       </div>
       ${place.coordinateSource === 'approximate' ? `<p class="coord-note">⚠️ 座標為區域參考位置</p>` : ''}
+      ${placeNav(place)}
+    </div>
+  `;
+}
+
+// ‹ › step through the list as shown (filters and sort applied), wrapping at the ends, so
+// people can compare spots without reopening the sheet
+function placeNav(place: Place): string {
+  const order = [...document.querySelectorAll<HTMLElement>('#place-list .list-item')].map(item => item.dataset.id!);
+  const index = order.indexOf(place.id);
+  if (index < 0 || order.length < 2) return '';
+  const at = (step: number) => order[(index + step + order.length) % order.length];
+  const { unit } = MODES[mode];
+  return `
+    <div class="popup-nav">
+      <button class="nav-btn" data-id="${at(-1)}">‹ 上一${unit}</button>
+      <span class="nav-count">${index + 1} / ${order.length}</span>
+      <button class="nav-btn" data-id="${at(1)}">下一${unit} ›</button>
     </div>
   `;
 }
@@ -442,6 +462,9 @@ function createPopupContent(place: Place): string {
 function showPopup(place: Place) {
   popup.setLngLat([place.lng, place.lat]).setHTML(createPopupContent(place)).addTo(map);
   popup.getElement().querySelector('.share-btn')!.addEventListener('click', () => sharePlace(place));
+  popup.getElement().querySelectorAll<HTMLElement>('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => selectPlace(btn.dataset.id!));
+  });
 }
 
 async function sharePlace(place: Place) {
@@ -765,6 +788,12 @@ function initSheet() {
   const panel = $('#panel');
   setSheet('peek');
   $('#sheet-handle').addEventListener('click', () => setSheet(sheetState === 'peek' ? 'full' : 'peek'));
+  // A tap anywhere on the collapsed sheet that isn't a control opens the list, not just the handle
+  panel.addEventListener('click', e => {
+    if (sheetState !== 'peek' || !mobileQuery.matches) return;
+    if ((e.target as Element).closest('button, a, input, label')) return;
+    setSheet('full');
+  });
 
   let startY = 0;
   const header = panel.querySelector<HTMLElement>('.panel-header')!;
