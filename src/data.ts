@@ -62,15 +62,15 @@ export const places: Place[] = [
     id: 'aa-bbq',
     name: 'AA BBQ Soong',
     googleQuery: 'AA BBQ Soong Lapu-Lapu Cebu',
-    lat: 10.310,
-    lng: 123.962,
+    lat: 10.296545,
+    lng: 124.001135,
     area: 'mactan',
     categories: ['bbq', 'puso'],
     recommended: '宿務老牌燒烤：烤豬肉串、liempo（烤五花）、焗扇貝配 puso，位子多適合團體',
     distance: '約 1–2 km',
     hours: '11:00–23:00',
-    coordinateSource: 'approximate',
-    coordinateNote: 'Soong area, Lapu-Lapu (area reference)'
+    coordinateSource: 'verified',
+    coordinateNote: 'M.L. Quezon National Highway, Soong 1, Maribago (from Exa.ai/Waze listing)'
   },
   {
     id: 'ayers-lechon',
@@ -104,29 +104,29 @@ export const places: Place[] = [
     id: 'nonies',
     name: "Nonie's Barbecue",
     googleQuery: "Nonie's Barbecue Agus Lapu-Lapu",
-    lat: 10.315,
-    lng: 123.970,
+    lat: 10.280507,
+    lng: 123.984192,
     area: 'mactan',
     categories: ['bbq', 'puso'],
     recommended: '路邊串燒攤：烤豬肉串、雞皮、雞腸、雞胗配 puso',
     distance: '約 4–6 km',
     hours: '15:00 開（需確認）',
-    coordinateSource: 'approximate',
-    coordinateNote: 'Agus area, Lapu-Lapu (area reference)'
+    coordinateSource: 'verified',
+    coordinateNote: 'Ibabao-Gisi-Agus Rd, Agus (from Exa.ai listing + mactannow.com)'
   },
   {
     id: 'langging',
     name: 'Langging Fried Chicken',
     googleQuery: 'Langging Fried Chicken Lapu-Lapu',
-    lat: 10.312,
-    lng: 123.968,
+    lat: 10.281084,
+    lng: 123.983537,
     area: 'mactan',
     categories: ['ngohiong-siomai'],
     recommended: '在地平價快餐：炸雞、ngohiong、蒸燒賣',
     distance: '約 4–6 km',
     hours: '06:00–20:00（需確認）',
-    coordinateSource: 'approximate',
-    coordinateNote: 'Central Lapu-Lapu area (area reference)'
+    coordinateSource: 'verified',
+    coordinateNote: 'Ibabao-Gisi-Agus Rd, Ibabao Agus (from Exa.ai listing + mactannow.com)'
   },
   {
     id: 'lapu-lapu-market',
@@ -148,14 +148,14 @@ export const places: Place[] = [
     id: 'cnt-lechon',
     name: 'CnT Lechon',
     googleQuery: 'CnT Lechon Cebu City',
-    lat: 10.315,
-    lng: 123.905,
+    lat: 10.3171482,
+    lng: 123.8851174,
     area: 'cebu-city',
     categories: ['lechon'],
     recommended: '在地人推薦的烤乳豬名店，中午排隊，下午常只剩碎肉',
     hours: '總店約 08:00–17:00',
-    coordinateSource: 'approximate',
-    coordinateNote: 'North Cebu City area (restaurant not in OSM)'
+    coordinateSource: 'verified',
+    coordinateNote: '1377 V. Rama Avenue, Guadalupe (from chillandtravel.com + OSM Nominatim)'
   },
   {
     id: 'puso-village',
@@ -187,27 +187,27 @@ export const places: Place[] = [
     id: 'carlos-ngohiong',
     name: 'Carlos Special Ngohiong',
     googleQuery: 'Carlos Special Ngohiong Cebu',
-    lat: 10.305,
-    lng: 123.895,
+    lat: 10.3146163,
+    lng: 123.9122027,
     area: 'cebu-city',
     categories: ['ngohiong-siomai'],
     recommended: '老字號 ngohiong 專賣，重點是辣醬汁',
     hours: '時間需確認',
-    coordinateSource: 'approximate',
-    coordinateNote: 'Central Cebu City area (restaurant not in OSM)'
+    coordinateSource: 'verified',
+    coordinateNote: 'C. Borces Street branch, Mabolo (from keeta.ph + OSM Nominatim)'
   },
   {
     id: 'way-tugpahay',
     name: 'Way Tugpahay Siomai sa Tisa',
     googleQuery: 'Way Tugpahay Siomai sa Tisa Katipunan Cebu',
-    lat: 10.295,
-    lng: 123.895,
+    lat: 10.3015678,
+    lng: 123.8706038,
     area: 'cebu-city',
     categories: ['ngohiong-siomai'],
     recommended: '在地 Tisa 燒賣，配辣蒜醬',
     hours: '24 小時（需確認）',
-    coordinateSource: 'approximate',
-    coordinateNote: 'Tisa/Katipunan area, south Cebu City (area reference)'
+    coordinateSource: 'verified',
+    coordinateNote: 'Katipunan Street, Tisa (from data file + OSM Nominatim)'
   },
   {
     id: 'carbon-market',
