@@ -62,17 +62,13 @@ const jpark = places.find(p => p.id === 'jpark')!;
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const mobileQuery = window.matchMedia('(max-width: 768px)');
 
-// The globe flight pulls map tiles for every view on the way, so only play it once,
-// and never on Data Saver or slow (roaming) connections.
-const INTRO_SEEN_KEY = 'cebu-food-map:intro-seen';
+// The intro (with Goro) plays on every load and a tap skips it. The globe flight pulls map
+// tiles for every view on the way, so never play it on Data Saver or slow (roaming) connections.
 const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
 const slowNetwork = Boolean(connection?.saveData) || /2g/.test(connection?.effectiveType ?? '');
-function introSeen(): boolean {
-  try { return localStorage.getItem(INTRO_SEEN_KEY) === '1'; } catch { return false; }
-}
 // A shared link (#place=…) goes straight to that place instead of playing the intro
 const sharedPlaceId = placeIdFromHash(location.hash, places.map(p => p.id));
-const playFlight = !sharedPlaceId && !reducedMotion && !slowNetwork && !introSeen() && !new URLSearchParams(location.search).has('skip-intro');
+const playFlight = !sharedPlaceId && !reducedMotion && !slowNetwork && !new URLSearchParams(location.search).has('skip-intro');
 
 // PHP→JPY rate on 2026-10-27 (open.er-api.com); replaced by a newer cached or live rate
 const RATE_KEY = 'cebu-food-map:php-jpy';
@@ -302,11 +298,6 @@ async function playIntro() {
 }
 
 function finishIntro() {
-  // Only a flight that actually played counts as seen; a shared link or reduced motion skips it
-  // without spending the one-time intro
-  if (playFlight) {
-    try { localStorage.setItem(INTRO_SEEN_KEY, '1'); } catch { /* private mode: replay next time */ }
-  }
   $('#intro').classList.add('done');
   document.body.classList.add('ready');
   // The globe is only for the flight in; terrain doesn't support it, so go flat before adding terrain
