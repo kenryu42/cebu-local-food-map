@@ -135,7 +135,8 @@ function sheetHeight(state: SheetState): number {
 // Computed from state, not measured, so it is right while the sheet is still sliding.
 function cameraPadding(): maplibregl.PaddingOptions {
   if (mobileQuery.matches) {
-    const bottom = Math.min(sheetHeight(sheetState), window.innerHeight - 220) + 16;
+    // A full sheet covers the map, so frame it for the half sheet the visitor will swipe back to
+    const bottom = Math.min(sheetHeight(sheetState === 'full' ? 'half' : sheetState), window.innerHeight - 220) + 16;
     return { top: 90, bottom, left: 24, right: 24 };
   }
   return { top: 80, bottom: 80, left: 460, right: 90 };
@@ -580,8 +581,8 @@ function initFilters() {
       if (tourRunning) stopTour();
       clearSelection();
       setMode(btn.dataset.mode as Mode);
-      // Bring the new list into view on phones, where a selection may have collapsed the sheet
-      if (mobileQuery.matches && sheetState === 'peek') setSheet('half');
+      // On phones, open the sheet fully so the mode's list is what the visitor sees
+      if (mobileQuery.matches) setSheet('full');
       applyFilters({ refit: true });
     });
   });
