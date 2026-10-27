@@ -124,14 +124,11 @@ function refreshOpenBadges() {
   });
 }
 
-type SheetState = 'peek' | 'half' | 'full';
-let sheetState: SheetState = 'half';
+type SheetState = 'peek' | 'full';
+let sheetState: SheetState = 'peek';
 
-// Visible height of the bottom sheet per state; mirrors --sheet-* in style.css
-function sheetHeight(state: SheetState): number {
-  const vh = window.innerHeight;
-  return state === 'peek' ? 168 : state === 'half' ? vh * 0.5 : vh * 0.88;
-}
+// Visible height of the collapsed bottom sheet; mirrors --sheet-peek in style.css
+const SHEET_PEEK = 168;
 
 // Keep the camera's focus clear of the bottom sheet (phone) or floating panel (desktop).
 // Computed from state, not measured, so it is right while the sheet is still sliding.
@@ -145,9 +142,8 @@ const keepWordsWhole = (name: string) => name
 
 function cameraPadding(): maplibregl.PaddingOptions {
   if (mobileQuery.matches) {
-    // A full sheet covers the map, so frame it for the half sheet the visitor will swipe back to
-    const bottom = Math.min(sheetHeight(sheetState === 'full' ? 'half' : sheetState), window.innerHeight - 220) + 16;
-    return { top: 90, bottom, left: 24, right: 24 };
+    // A full sheet covers the map, so always frame it for the collapsed sheet
+    return { top: 90, bottom: SHEET_PEEK + 16, left: 24, right: 24 };
   }
   return { top: 80, bottom: 80, left: 460, right: 90 };
 }
@@ -803,8 +799,6 @@ function initViewControls() {
 
 // ---------- Mobile bottom sheet ----------
 
-const SHEET_ORDER: SheetState[] = ['peek', 'half', 'full'];
-
 function setSheet(state: SheetState) {
   sheetState = state;
   $('#panel').dataset.sheet = state;
@@ -812,10 +806,8 @@ function setSheet(state: SheetState) {
 
 function initSheet() {
   const panel = $('#panel');
-  setSheet('half');
-  $('#sheet-handle').addEventListener('click', () => {
-    setSheet(sheetState === 'peek' ? 'half' : sheetState === 'half' ? 'full' : 'peek');
-  });
+  setSheet('peek');
+  $('#sheet-handle').addEventListener('click', () => setSheet(sheetState === 'peek' ? 'full' : 'peek'));
 
   let startY = 0;
   const header = panel.querySelector<HTMLElement>('.panel-header')!;
@@ -824,8 +816,7 @@ function initSheet() {
     el.addEventListener('touchend', e => {
       const dy = e.changedTouches[0].clientY - startY;
       if (Math.abs(dy) < 40) return;
-      const current = SHEET_ORDER.indexOf(sheetState);
-      setSheet(SHEET_ORDER[Math.max(0, Math.min(2, current + (dy < 0 ? 1 : -1)))]);
+      setSheet(dy < 0 ? 'full' : 'peek');
     });
   }
 }
@@ -920,7 +911,7 @@ async function refreshRate() {
 function initHotelCard() {
   const modal = $('#hotel-card');
   const close = () => { modal.hidden = true; };
-  $('#hotel-btn').addEventListener('click', () => { modal.hidden = false; });
+  for (const btn of [$('#hotel-btn'), $('#sheet-hotel')]) btn.addEventListener('click', () => { modal.hidden = false; });
   $('#hotel-close').addEventListener('click', close);
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });

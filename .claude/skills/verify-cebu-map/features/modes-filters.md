@@ -24,7 +24,7 @@ Preconditions:
 
 - Page is usable (`open '/cebu-local-food-map/?skip-intro' waitfor "document.body.classList.contains('ready')" 30000 settle`).
 
-- **Sight mode.** Steps: `click '.mode[data-mode="sight"]' settle`. `expect "[...document.querySelectorAll('.chip')].map(c => c.dataset.category).join() === 'history,temple,viewpoint'"`, `expect "document.querySelector('#roulette-btn').textContent.includes('去哪裡玩')"`, `expect "document.querySelectorAll('.marker:not(.is-hidden)').length === 11"` (9 sights + hotel + airport), `expect "document.querySelector('#panel').dataset.sheet === 'full'"` (the sheet opens fully from half).
+- **Sight mode.** Steps: `click '.mode[data-mode="sight"]' settle`. `expect "[...document.querySelectorAll('.chip')].map(c => c.dataset.category).join() === 'history,temple,viewpoint'"`, `expect "document.querySelector('#roulette-btn').textContent.includes('去哪裡玩')"`, `expect "document.querySelectorAll('.marker:not(.is-hidden)').length === 11"` (9 sights + hotel + airport), `expect "document.querySelector('#panel').dataset.sheet === 'full'"` (the sheet opens to full screen from peek).
 - **Food mode.** Steps: `click '.mode[data-mode="food"]' settle`. Seven food chips; 18 pins; picker reads 今晚吃什麼.
 - **Switch with a spot open.** Select a spot, then switch mode. Steps: `click '#sheet-handle' waitfor "document.querySelector('#panel').dataset.sheet === 'full'" 3000 click '.list-item[data-id="aa-bbq"]' wait '.maplibregl-popup .popup-content' 15000 click '.mode[data-mode="sight"]' sleep 2500 expect "[...document.querySelectorAll('.marker:not(.is-hidden)')].every(m => { const r = m.getBoundingClientRect(); return r.top >= 0 && r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; })"`. The map leaves the old spot and frames every sight, and the console has no `Map cannot fit within canvas` warning. Repeat with `click '#reset-view'` and an area segment in place of the mode switch.
 - **Area.** Steps: `click '.seg[data-area="mactan"]' settle`. `expect "[...document.querySelectorAll('.list-item')].every(i => !['cnt-lechon','esmen','carbon-market'].includes(i.dataset.id))"`; the map reframes on Mactan (screenshot).
@@ -38,5 +38,5 @@ Preconditions:
 - `--geo` is a stand-in for GPS; say so. Without it the page sees location as denied and MapLibre logs `Geolocation support is not available so the GeolocateControl will be disabled.` That warning is expected, not a regression.
 - Switching mode clears selected chips and any open popup.
 - A reframe after a selection once failed silently on phones (the selection's padding stacked on the overview's). `Map cannot fit within canvas` in the console means that regression is back.
-- On phones a mode switch reopens a collapsed sheet to `half`.
+- On phones a mode switch opens the sheet to `full`.
 - The chip row scrolls sideways at 390 px; `click` scrolls a chip into view only if it is off screen.

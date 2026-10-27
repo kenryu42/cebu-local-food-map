@@ -14,7 +14,7 @@ This directory is the maintained source for verifying the user-facing behavior o
 
 - Every command below is `RUN_ID=<id> $S/drive.mjs [options] STEP...`; recipes list only the steps. Keep a journey in one invocation.
 - Use the stable handles in `../SKILL.md` (ids and `data-*` attributes). Use `click-text` only where a handle has no id, such as map pins.
-- On phones the list sits in the bottom sheet: in the `half` state most list items are below the screen. Open the sheet (`click '#sheet-handle'` → `full`) before clicking a list item, as a person would scroll or expand.
+- On phones the list sits in the bottom sheet: in the `peek` state the list is below the screen. Open the sheet (`click '#sheet-handle'` → `full`, the whole screen) before clicking a list item, as a person would scroll or expand.
 - Wait on state (`wait`, `waitfor`, `gone`, `settle`), not on `sleep`. `sleep` is only for a screenshot after an animation that has no end state (the orbit).
 - Place ids come from `src/data.ts`; quoted names and flags are literal.
 

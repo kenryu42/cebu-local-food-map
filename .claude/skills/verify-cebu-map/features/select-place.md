@@ -37,7 +37,7 @@ Preconditions:
 
 ## Gotchas
 
-- With the sheet at `half`, most list items are off screen; `click` says so. Open the sheet first.
+- With the sheet at `peek`, the list is off screen; `click` says so. Open the sheet first.
 - Don't click the popup while the camera is still flying; `wait` for `.popup-content` first (the driver also waits for the target to stop moving).
 - In headless Chrome `navigator.share` exists but never settles, so 分享 hangs on that path. Only the copy path is provable here; the native share sheet needs a real phone.
 - 導航 opens Google Maps in a new tab of this run's browser. `drive.mjs` stays on the app tab and prints a note about other tabs.

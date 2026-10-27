@@ -64,7 +64,7 @@ Keep one journey in one invocation: the phone viewport, `--geo` and permission g
 
 Stable handles in this app (ids and data attributes, there are few ARIA names):
 
-- Sheet: `#panel[data-sheet=peek|half|full]`, handle `#sheet-handle`, header `.panel-header`
+- Sheet: `#panel[data-sheet=peek|full]` (full covers the whole screen), handle `#sheet-handle`, the full sheet's 🏨 `#sheet-hotel`, header `.panel-header`
 - Modes `.mode[data-mode=food|sight]`, area `.seg[data-area=all|mactan|cebu-city]`, chips `.chip[data-category=<id>]`, sort `.sort[data-sort=area|near]`
 - List `.list-item[data-id=<place id>]`, section titles `.list-section h4`, badges `.open-badge.open|closing-soon|closed`, prices `.list-price`
 - Popup `.maplibregl-popup .popup-content`, its `.maps-link` and `.share-btn`, close `.maplibregl-popup-close-button`

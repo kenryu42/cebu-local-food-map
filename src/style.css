@@ -16,10 +16,8 @@
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* Visible sheet heights; keep in sync with sheetHeight() in main.ts */
+  /* Visible height of the collapsed sheet; keep in sync with SHEET_PEEK in main.ts */
   --sheet-peek: 168px;
-  --sheet-half: 50dvh;
-  --sheet-full: 88dvh;
 }
 
 * {
@@ -147,7 +145,7 @@ button {
   right: 0;
   bottom: 0;
   z-index: 20;
-  height: var(--sheet-full);
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--glass);
@@ -156,12 +154,36 @@ button {
   border-radius: var(--radius) var(--radius) 0 0;
   box-shadow: 0 -10px 40px -10px rgb(42 27 18 / 0.3);
   transform: translateY(100%);
-  transition: transform 0.55s var(--ease-out);
+  transition: transform 0.55s var(--ease-out), padding-top 0.55s var(--ease-out), border-radius 0.55s var(--ease-out);
 }
 
-body.ready .panel[data-sheet="peek"] { transform: translateY(calc(var(--sheet-full) - var(--sheet-peek))); }
-body.ready .panel[data-sheet="half"] { transform: translateY(calc(var(--sheet-full) - var(--sheet-half))); }
-body.ready .panel[data-sheet="full"] { transform: translateY(0); }
+body.ready .panel[data-sheet="peek"] { transform: translateY(calc(100dvh - var(--sheet-peek))); }
+/* Open, the sheet takes the whole screen: the map behind a sliver is no use, the list needs the room */
+body.ready .panel[data-sheet="full"] {
+  transform: translateY(0);
+  padding-top: env(safe-area-inset-top);
+  border-radius: 0;
+  background: var(--cream);
+}
+
+/* The full sheet covers the map's 🏨 button, so it brings its own in the handle row */
+.sheet-hotel {
+  position: absolute;
+  top: calc(4px + env(safe-area-inset-top));
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  font-size: 18px;
+  box-shadow: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s, transform 0.3s var(--ease-spring);
+}
+
+.sheet-hotel::before { content: ''; position: absolute; inset: -4px; }
+
+body.ready .panel[data-sheet="full"] .sheet-hotel { opacity: 1; visibility: visible; }
 
 .sheet-handle {
   display: grid;
@@ -1386,9 +1408,9 @@ body.ready .map-tools {
     transform: translateX(calc(-100% - 32px));
   }
 
-  body.ready .panel[data-sheet] { transform: none; }
+  body.ready .panel[data-sheet] { transform: none; padding-top: 0; border-radius: 24px; background: var(--glass); }
 
-  .sheet-handle { display: none; }
+  .sheet-handle, .sheet-hotel { display: none; }
 
   .panel-header { padding: 20px 20px 12px; }
   .panel-header h1 { font-size: 22px; }
