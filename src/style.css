@@ -1206,8 +1206,8 @@ body.ready .map-tools {
 
 .modal-close {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 12px;
+  right: 12px;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -1216,7 +1216,13 @@ body.ready .map-tools {
   background: var(--sand);
 }
 
+/* Shares a 44px row with the close button, so the button never sits on the driver card */
 .driver-label {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: -8px;
+  padding-right: 52px;
   font-size: 13px;
   font-weight: 700;
   color: var(--ink-soft);
@@ -1304,6 +1310,8 @@ body.ready .map-tools {
   color: var(--ink-soft);
 }
 
+/* Phone numbers and short service names never split across lines */
+.emergency-row .nowrap,
 .emergency-row .tel { white-space: nowrap; }
 
 .emergency-row b {
