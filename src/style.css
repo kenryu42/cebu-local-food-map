@@ -462,6 +462,7 @@ body.touring #tour-btn {
   font-size: 15.5px;
   font-weight: 700;
   line-height: 1.3;
+  text-wrap: balance; /* a two-line name splits evenly instead of leaving one word behind */
 }
 
 .list-price {
@@ -813,11 +814,14 @@ body.ready .map-tools {
   background: color-mix(in srgb, var(--c) 14%, #fff);
 }
 
+.nobr { white-space: nowrap; }
+
 .popup-content h3 {
   margin-bottom: 6px;
   font-size: 17px;
   font-weight: 900;
   line-height: 1.3;
+  text-wrap: balance;
 }
 
 .popup-content .recommended {

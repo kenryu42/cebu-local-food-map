@@ -133,6 +133,14 @@ function sheetHeight(state: SheetState): number {
 
 // Keep the camera's focus clear of the bottom sheet (phone) or floating panel (desktop).
 // Computed from state, not measured, so it is right while the sheet is still sliding.
+// When a name wraps, break between words, never inside one: keep a （parenthesised part）,
+// a hyphenated word like Lapu-Lapu and a run of Chinese characters each on one line
+const nobr = (text: string) => `<span class="nobr">${text}</span>`;
+const keepWordsWhole = (name: string) => name
+  .split(/([（(][^）)]*[）)])/)
+  .map((part, i) => i % 2 ? nobr(part) : part.replace(/\S+-\S+|[\u4e00-\u9fff]+/g, nobr))
+  .join('');
+
 function cameraPadding(): maplibregl.PaddingOptions {
   if (mobileQuery.matches) {
     // A full sheet covers the map, so frame it for the half sheet the visitor will swipe back to
@@ -421,7 +429,7 @@ function createPopupContent(place: Place): string {
   return `
     <div class="popup-content">
       <div class="tags">${tags}</div>
-      <h3>${place.name} ${openBadge(place)}</h3>
+      <h3>${keepWordsWhole(place.name)} ${openBadge(place)}</h3>
       ${place.recommended ? `<p class="recommended">${place.recommended}</p>` : ''}
       ${place.hours ? `<p class="info">⏰ ${place.hours}</p>` : ''}
       ${place.price ? `<p class="info">💰 ${formatPrice(place.price, rate.value)}</p>` : ''}
@@ -636,7 +644,7 @@ function createListItem(place: Place, index: number): string {
     <button class="list-item${place.id === activeId ? ' is-active' : ''}" data-id="${place.id}" style="--c:${meta.color};--i:${index}">
       <span class="list-badge">${meta.emoji}</span>
       <span class="list-text">
-        <span class="list-item-name">${place.name} ${openBadge(place)}</span>
+        <span class="list-item-name">${keepWordsWhole(place.name)} ${openBadge(place)}</span>
         ${place.recommended ? `<span class="list-item-desc">${place.recommended}</span>` : ''}
         <span class="list-meta">${place.hours ? `<span>⏰ ${place.hours}</span>` : ''}${distance}</span>
         ${place.price ? `<span class="list-price">💰 ${formatPrice(place.price, rate.value)}</span>` : ''}
