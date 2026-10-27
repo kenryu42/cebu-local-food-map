@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { openStatus, formatPrice, placeIdFromHash, shareUrl, sortByDistance } from '../src/trip.ts';
+import { openStatus, formatPrice, placeIdFromHash, shareUrl, sortByDistance, nextInBag } from '../src/trip.ts';
 
 // Cebu is UTC+8, so 04:00Z is noon in Cebu no matter where the test machine is
 const cebuTime = (hhmm: string) => new Date(`2026-10-28T${hhmm}:00+08:00`);
@@ -60,4 +60,35 @@ test('places sort nearest first from where you stand', () => {
   const far = { id: 'far', lat: 10.37, lng: 123.87 };
   const sorted = sortByDistance([far, near], { lat: 10.283, lng: 123.996 });
   assert.deepEqual(sorted.map(p => p.id), ['near', 'far']);
+});
+
+// Spin the 🎲 picker many times, carrying the saved state between spins as the app does
+function spins(count: number, items: string[]) {
+  let state: { bag: string[]; last?: string } = { bag: [] };
+  const shown: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const { pick, bag } = nextInBag(state.bag, items, state.last);
+    shown.push(pick);
+    state = { bag, last: pick };
+  }
+  return shown;
+}
+
+test('every round of spins shows each Goro photo once', () => {
+  const items = ['grass', 'chair', 'paw', 'yawn'];
+  const shown = spins(400, items);
+  for (let round = 0; round < shown.length; round += items.length) {
+    assert.deepEqual(shown.slice(round, round + items.length).sort(), [...items].sort());
+  }
+});
+
+test('the same Goro photo never shows twice in a row, even across rounds', () => {
+  const shown = spins(400, ['grass', 'chair', 'paw', 'yawn']);
+  shown.slice(1).forEach((pick, i) => assert.notEqual(pick, shown[i]));
+});
+
+test('a saved round left over from an older photo set only yields current photos', () => {
+  const { pick, bag } = nextInBag(['basket', 'paw'], ['grass', 'chair', 'paw', 'yawn'], 'basket');
+  assert.equal(pick, 'paw');
+  assert.deepEqual(bag, []);
 });

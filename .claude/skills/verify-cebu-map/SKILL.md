@@ -32,7 +32,7 @@ RUN_ID=r1 $S/drive.mjs open '/cebu-local-food-map/?skip-intro' \
   waitfor "document.body.classList.contains('ready')" 30000 settle
 ```
 
-`?skip-intro` skips the one-time globe flight. There is no data to seed: places are static in `src/data.ts`; per-visitor state is only `localStorage` (intro seen, cached exchange rate), which `clear-storage` wipes.
+`?skip-intro` skips the one-time globe flight. There is no data to seed: places are static in `src/data.ts`; per-visitor state is only `localStorage` (intro seen, cached exchange rate, Goro photo round), which `clear-storage` wipes.
 
 A second instance needs its own `RUN_ID`, `PORT` and `CDP_PORT`, and `SKIP_BUILD=1` so it does not rebuild `dist/` under the first one. Launch refuses a port that is already taken; never drive an instance this run did not start.
 

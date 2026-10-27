@@ -122,6 +122,45 @@ button {
 .intro.playing .intro-title span:nth-child(2) { animation-delay: 0.45s; color: #ffd166; }
 .intro.playing .intro-title span:nth-child(3) { animation-delay: 0.6s; }
 
+/* Goro flies across under the title during the globe flight, head first like Superman */
+.intro-goro {
+  position: absolute;
+  top: 62%;
+  left: 0;
+  width: min(220px, 56vw);
+  opacity: 0;
+  transform: translateX(100vw);
+}
+
+.intro.playing .intro-goro {
+  animation: goro-fly 6.5s linear 1.2s forwards;
+}
+
+.intro-goro img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 4px solid #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+  transform: rotate(-4deg);
+}
+
+.intro-goro figcaption {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgb(0 0 0 / 0.5);
+}
+
+@keyframes goro-fly {
+  0% { opacity: 1; transform: translate(100vw, 0); }
+  25% { transform: translate(calc(75vw - 82%), -10px); }
+  50% { transform: translate(calc(50vw - 50%), 6px); }
+  75% { transform: translate(calc(25vw - 18%), -8px); }
+  100% { opacity: 1; transform: translate(-110%, 0); }
+}
+
 .intro-skip {
   margin-top: 28px;
   font-size: 12px;
@@ -565,6 +604,8 @@ body.ready .panel[data-sheet="full"] {
   color: var(--ink-soft);
 }
 
+.empty .goro-avatar { margin: 0 auto 12px; }
+
 /* ---------- Info ---------- */
 
 .info-section {
@@ -954,14 +995,36 @@ body.ready .map-tools {
 .roulette[hidden] { display: none; }
 
 .roulette-card {
+  position: relative;
   width: min(340px, 100%);
-  padding: 22px 20px 20px;
+  /* Room for Goro's photo, which sits half above the card */
+  padding: 56px 20px 20px;
   text-align: center;
   border-radius: 26px;
   background: var(--cream);
   box-shadow: var(--shadow-lg);
   animation: popup-in 0.5s var(--ease-spring);
 }
+
+/* Round photo of Goro, the cat; on the 🎲 card and in an empty list */
+.goro-avatar {
+  display: block;
+  width: 88px;
+  height: 88px;
+  border: 4px solid var(--cream);
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--sand);
+  box-shadow: var(--shadow);
+}
+
+.roulette-card .goro-avatar {
+  position: absolute;
+  top: -44px;
+  left: calc(50% - 44px);
+}
+
+.roulette.won .goro-avatar { animation: jackpot 0.6s var(--ease-spring); }
 
 .roulette-label {
   font-size: 13px;

@@ -89,3 +89,19 @@ export function distanceKm(a: Point, b: Point): number {
 export function sortByDistance<T extends Point>(points: T[], from: Point): T[] {
   return [...points].sort((a, b) => distanceKm(from, a) - distanceKm(from, b));
 }
+
+// Shuffle bag: each round deals every item once in a random order. A new round never opens
+// with the item the last one ended on, and items no longer in the set are dropped.
+export function nextInBag<T>(bag: T[], items: T[], last?: T): { pick: T; bag: T[] } {
+  let next = bag.filter(item => items.includes(item));
+  if (next.length === 0) {
+    next = [...items];
+    for (let i = next.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [next[i], next[j]] = [next[j], next[i]];
+    }
+    if (next.length > 1 && next[0] === last) next.push(next.shift()!);
+  }
+  const [pick, ...rest] = next;
+  return { pick, bag: rest };
+}

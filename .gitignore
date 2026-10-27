@@ -33,3 +33,6 @@ dist-ssr
 
 # Verification run evidence (verify-cebu-map skill)
 /artifacts/verify/
+
+# Original photos for public/goro (full size, personal); only the stripped crops ship
+/cats/

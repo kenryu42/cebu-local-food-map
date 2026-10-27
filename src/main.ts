@@ -7,7 +7,7 @@ import './style.css';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import type { Feature, LineString } from 'geojson';
 import { places, glossary, phraseGroups, streetFoodTips, sources, type Place, type Category, type Area } from './data';
-import { openStatus, formatPrice, shareUrl, placeIdFromHash, distanceKm, sortByDistance, type OpenStatus } from './trip';
+import { openStatus, formatPrice, shareUrl, placeIdFromHash, distanceKm, sortByDistance, nextInBag, type OpenStatus } from './trip';
 
 const CATEGORY_META: Record<Category, { label: string; emoji: string; color: string }> = {
   'lechon': { label: 'Lechon 烤乳豬', emoji: '🐷', color: '#e8432e' },
@@ -40,6 +40,20 @@ const MODES: Record<Mode, { categories: Category[]; pick: string; unit: string; 
     burst: ['⛪', '🏛️', '🌄', '🌺', '📸', '🌴', '🗿', '✨']
   }
 };
+// Goro (the author's cat) picks the 🎲 winner. Spins cycle through these photos in a shuffled
+// order kept on the phone, so everyone sees all of them even with one spin per visit.
+const GORO_PICKS = ['grass', 'chair', 'paw', 'yawn'];
+const GORO_BAG_KEY = 'cebu-food-map:goro-bag';
+const goroPhoto = (name: string) => `${import.meta.env.BASE_URL}goro/${name}.webp`;
+
+function nextGoro(): string {
+  let saved: { bag: string[]; last?: string } = { bag: [] };
+  try { saved = { ...saved, ...JSON.parse(localStorage.getItem(GORO_BAG_KEY) ?? '{}') }; } catch { /* start a new round */ }
+  const { pick, bag } = nextInBag(saved.bag, GORO_PICKS, saved.last);
+  try { localStorage.setItem(GORO_BAG_KEY, JSON.stringify({ bag, last: pick })); } catch { /* private mode: rounds reset per visit */ }
+  return pick;
+}
+
 const OPEN_LABEL: Record<OpenStatus, string> = { 'open': '營業中', 'closing-soon': '即將打烊', 'closed': '休息中' };
 
 const JAPAN: [number, number] = [139.7, 35.68];
@@ -681,13 +695,20 @@ function updateList() {
       ['地標', filtered.filter(p => p.area === 'landmark')]
     ];
 
+  // J Park and the airport are always listed, so "nothing matches" means no spot matches
+  const empty = filtered.some(isSpot) ? '' : `
+    <div class="empty">
+      <img class="goro-avatar" src="${goroPhoto('sleep')}" alt="" width="264" height="264" />
+      <p>goro 睡著了…<br />${MODES[mode].empty}</p>
+    </div>
+  `;
   let index = 0;
-  $('#place-list').innerHTML = groups
+  $('#place-list').innerHTML = empty + groups
     .filter(([, group]) => group.length > 0)
     .map(([title, group]) => `
       <div class="list-section"><h4>${title}</h4><span>${group.length}</span></div>
       ${group.map(place => createListItem(place, index++)).join('')}
-    `).join('') || `<p class="empty">${MODES[mode].empty}</p>`;
+    `).join('');
 
   document.querySelectorAll<HTMLElement>('.list-item').forEach(item => {
     const id = item.dataset.id!;
@@ -713,6 +734,8 @@ async function spinRoulette() {
   overlay.hidden = false;
   overlay.classList.remove('won');
   descEl.textContent = '';
+  $<HTMLImageElement>('#roulette-goro').src = goroPhoto(nextGoro());
+  $('#roulette-label').textContent = MODES[mode].pick;
 
   const ticks = reducedMotion ? 1 : 22;
   const startIndex = Math.floor(Math.random() * pool.length);
@@ -728,6 +751,7 @@ async function spinRoulette() {
   }
 
   overlay.classList.add('won');
+  $('#roulette-label').textContent = '🐾 goro推薦';
   descEl.textContent = winner.recommended ?? '';
   burst();
   await wait(reducedMotion ? 600 : 1500);

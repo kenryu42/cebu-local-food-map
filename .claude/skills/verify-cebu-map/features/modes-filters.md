@@ -39,4 +39,5 @@ Preconditions:
 - Switching mode clears selected chips and any open popup.
 - A reframe after a selection once failed silently on phones (the selection's padding stacked on the overview's). `Map cannot fit within canvas` in the console means that regression is back.
 - On phones a mode switch opens the sheet to `full`.
+- When no spot matches (e.g. 麥克坦島 + 米其林必比登), the list shows a sleeping Goro with 「goro 睡著了…」 and the empty message above 地標 (J Park and the airport are always listed).
 - The chip row scrolls sideways at 390 px; `click` scrolls a chip into view only if it is off screen.
