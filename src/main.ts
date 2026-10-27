@@ -616,7 +616,6 @@ function renderModeControls() {
   });
   $('#roulette-btn').textContent = `🎲 ${MODES[mode].pick}`;
   $('#roulette-label').textContent = MODES[mode].pick;
-  $('#tour-btn').textContent = `▶ ${MODES[mode].tour}`;
   $('#category-chips').innerHTML = MODES[mode].categories.map(cat => `
     <button class="chip" data-category="${cat}" style="--c:${CATEGORY_META[cat].color}">
       <span>${CATEGORY_META[cat].emoji} ${CATEGORY_META[cat].label}</span><b class="chip-count"></b>
@@ -909,17 +908,18 @@ async function refreshRate() {
   }
 }
 
-// ---------- Hotel & emergency card ----------
+// ---------- Bottom cards: hotel & emergency, peso ⇄ yen ----------
 
-function initHotelCard() {
-  const modal = $('#hotel-card');
-  const card = modal.querySelector<HTMLElement>('.hotel-card')!;
+function initSheetModal(modal: HTMLElement, openers: HTMLElement[], onOpen?: () => void) {
+  const card = modal.querySelector<HTMLElement>('.sheet-card')!;
   const close = () => {
     modal.hidden = true;
     card.style.transition = card.style.transform = '';
   };
-  for (const btn of [$('#hotel-btn'), $('#quick-hotel')]) btn.addEventListener('click', () => { modal.hidden = false; });
-  $('#hotel-close').addEventListener('click', close);
+  for (const btn of openers) btn.addEventListener('click', () => {
+    modal.hidden = false;
+    onOpen?.();
+  });
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });
 
@@ -953,6 +953,20 @@ function initHotelCard() {
     card.style.transition = 'transform 0.25s ease-in';
     card.style.transform = 'translateY(100%)';
     card.addEventListener('transitionend', close, { once: true });
+  });
+}
+
+function initCards() {
+  initSheetModal($('#hotel-card'), [$('#hotel-btn'), $('#quick-hotel')]);
+  // Open straight onto the number keyboard: the usual question is "how much is this price in yen?"
+  initSheetModal($('#fx-card'), [$('#quick-fx')], () => $<HTMLInputElement>('#php-input').focus());
+
+  // The on-screen keyboard overlaps the bottom of the layout viewport on iOS; lift the
+  // cards above it so the fields being typed in stay visible
+  const viewport = window.visualViewport;
+  viewport?.addEventListener('resize', () => {
+    const keyboard = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+    document.querySelectorAll<HTMLElement>('.sheet-modal').forEach(modal => { modal.style.bottom = `${keyboard}px`; });
   });
 }
 
@@ -1029,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initFilters();
   initSort();
   initConverter();
-  initHotelCard();
+  initCards();
   initInfoPanel();
   initTabs();
   initViewControls();

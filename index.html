@@ -39,7 +39,14 @@
 
       <div class="actions">
         <button id="roulette-btn" class="action action-primary">🎲 今晚吃什麼？</button>
-        <button id="tour-btn" class="action">▶ 美食巡禮</button>
+        <button id="tour-btn" class="action">▶ 巡禮</button>
+        <button id="quick-fx" class="action action-fx" aria-label="披索日圓換算">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.48 9.26A8 8 0 0 1 19.52 9.26M20.3 6.36 19.52 9.26 17.06 7.54" />
+            <path d="M19.52 14.74A8 8 0 0 1 4.48 14.74M3.7 17.64 4.48 14.74 6.94 16.46" />
+            <path transform="translate(12 12) scale(.85) translate(-12 -12)" vector-effect="non-scaling-stroke" d="M12 6.6v10.8M14.4 9.3c-.3-.9-1.2-1.5-2.4-1.5-1.4 0-2.4.8-2.4 1.8 0 2.4 4.9 1.6 4.9 4.3 0 1.1-1 2-2.5 2-1.4 0-2.3-.6-2.6-1.6" />
+          </svg>
+        </button>
         <button id="quick-hotel" class="action action-hotel" aria-label="回飯店／緊急聯絡">🏨</button>
       </div>
 
@@ -71,22 +78,6 @@
           <div class="info-section callout">
             <strong>⚠️ Undas 連假提醒</strong>
             <p>10/31 (六) 是 Undas 連假第一天，從麥克坦島去市區可能要 90 分鐘以上。市區的店最好排在前幾天。小店可能提早關門，出發前先確認。</p>
-          </div>
-
-          <div class="info-section">
-            <h4>💱 披索 ⇄ 日圓</h4>
-            <div class="converter">
-              <label class="money"><span>₱</span><input id="php-input" type="text" inputmode="decimal" placeholder="0" aria-label="披索" /></label>
-              <span class="swap" aria-hidden="true">⇄</span>
-              <label class="money"><span>¥</span><input id="jpy-input" type="text" inputmode="decimal" placeholder="0" aria-label="日圓" /></label>
-            </div>
-            <div class="quick-amounts">
-              <button data-php="20">₱20</button>
-              <button data-php="100">₱100</button>
-              <button data-php="500">₱500</button>
-              <button data-php="1000">₱1,000</button>
-            </div>
-            <p id="rate-info" class="rate-info"></p>
           </div>
 
           <div class="info-section">
@@ -134,8 +125,8 @@
 
     <!-- Card to show a taxi or Grab driver, plus emergency contacts -->
     <div id="hotel-card" class="sheet-modal" hidden>
-      <div class="hotel-card" role="dialog" aria-modal="true" aria-labelledby="hotel-title">
-        <button id="hotel-close" class="modal-close" aria-label="關閉">×</button>
+      <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="hotel-title">
+        <div class="card-handle" aria-hidden="true"></div>
         <p class="driver-label">給司機看 · Show to driver</p>
         <div class="driver-card">
           <p class="driver-ask">Please take me to</p>
@@ -152,12 +143,32 @@
             <span>🇨🇳 中國駐宿務總領事館 <span class="nowrap">領事保護</span><small>Mandarin Plaza Hotel 25F, Archbishop Reyes Ave · 外交部 24 小時熱線 <span class="tel">+86-10-12308</span></small></span><b>(032) 343-0008</b>
           </a>
           <a class="emergency-row" href="tel:+639178194597">
-            <span>🇹🇼 駐菲律賓台北經濟文化辦事處 <span class="nowrap">急難救助</span><small>宿務沒有辦事處，由馬尼拉辦事處處理 · 非緊急 <span class="tel">(02) 8887-6688</span></small></span><b>0917-819-4597</b>
+            <span>🇹🇼 駐菲律賓<span class="nowrap">台北經濟文化辦事處</span> <span class="nowrap">急難救助</span><small>宿務沒有辦事處，由馬尼拉辦事處處理 · 非緊急 <span class="tel">(02) 8887-6688</span></small></span><b>0917-819-4597</b>
           </a>
           <a class="emergency-row" href="tel:+63322317321">
             <span>🇯🇵 日本國駐宿務總領事館<small>2Quad Building 8F, Cebu Business Park · 平日 08:30–17:15</small></span><b>(032) 231-7321</b>
           </a>
         </div>
+      </div>
+    </div>
+
+    <!-- Peso ⇄ yen converter, a tap away from the map and the list -->
+    <div id="fx-card" class="sheet-modal" hidden>
+      <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="fx-title">
+        <div class="card-handle" aria-hidden="true"></div>
+        <h2 id="fx-title" class="card-title">披索 ⇄ 日圓</h2>
+        <div class="converter">
+          <label class="money"><span>₱</span><input id="php-input" type="text" inputmode="decimal" placeholder="0" aria-label="披索" /></label>
+          <span class="swap" aria-hidden="true">⇄</span>
+          <label class="money"><span>¥</span><input id="jpy-input" type="text" inputmode="decimal" placeholder="0" aria-label="日圓" /></label>
+        </div>
+        <div class="quick-amounts">
+          <button data-php="20">₱20</button>
+          <button data-php="100">₱100</button>
+          <button data-php="500">₱500</button>
+          <button data-php="1000">₱1,000</button>
+        </div>
+        <p id="rate-info" class="rate-info"></p>
       </div>
     </div>
 

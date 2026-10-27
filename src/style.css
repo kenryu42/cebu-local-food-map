@@ -234,8 +234,9 @@ body.ready .panel[data-sheet="full"] {
 
 .actions {
   display: grid;
-  /* The 🏨 card is what people grab when a taxi pulls up, so it sits with the actions on every sheet state */
-  grid-template-columns: 1.4fr 1fr 48px;
+  /* The exchange icon and 🏨 are what people reach for at a stall or when a taxi pulls up, so they sit with
+     the actions on every sheet state */
+  grid-template-columns: 1fr auto 48px 48px;
   gap: 10px;
   padding: 0 16px 12px;
 }
@@ -253,12 +254,22 @@ body.ready .panel[data-sheet="full"] {
 
 .action:active { transform: scale(0.95); }
 
-.action-hotel {
+.action-hotel,
+.action-fx {
   padding: 0;
   font-size: 22px;
-  background: linear-gradient(135deg, #2bb5b5, var(--sea));
   box-shadow: var(--shadow);
 }
+
+.action-hotel { background: linear-gradient(135deg, #2bb5b5, var(--sea)); }
+.action-fx {
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  background: linear-gradient(135deg, #ffd43b, #fab005);
+}
+
+.action-fx svg { width: 28px; height: 28px; }
 .action:disabled { opacity: 0.6; }
 
 .action-primary {
@@ -1116,7 +1127,7 @@ body.ready .map-tools {
 .quick-amounts button:active { transform: scale(0.94); }
 
 .rate-info {
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 12px;
   color: var(--ink-soft);
 }
@@ -1205,7 +1216,7 @@ body.ready .map-tools {
 
 .sheet-modal[hidden] { display: none; }
 
-.hotel-card {
+.sheet-card {
   position: relative;
   width: 100%;
   max-height: 92dvh;
@@ -1220,33 +1231,30 @@ body.ready .map-tools {
   from { transform: translateY(100%); }
 }
 
-.modal-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+/* Drag handle, matching the bottom sheet's: the cards close by swiping down (or tapping outside) */
+.card-handle {
   width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  font-size: 24px;
-  color: var(--ink-soft);
-  background: var(--sand);
+  height: 5px;
+  margin: -8px auto 14px;
+  border-radius: 99px;
+  background: #d6c4b0;
 }
 
-/* Shares a 44px row with the close button, so the button never sits on the driver card */
 .driver-label {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  margin-top: -8px;
-  padding-right: 52px;
   font-size: 13px;
   font-weight: 700;
   color: var(--ink-soft);
 }
 
+.card-title {
+  margin-bottom: 12px;
+  font-size: 17px;
+  font-weight: 900;
+}
+
 /* Large, high-contrast and in English so a driver can read it from the front seat */
 .driver-card {
-  margin: 10px 0 14px;
+  margin: 12px 0 14px;
   padding: 20px 18px;
   border-radius: 20px;
   color: #fff;
@@ -1429,11 +1437,14 @@ body.ready .map-tools {
 
   .sheet-modal { align-items: center; }
 
-  .hotel-card {
+  .sheet-card {
     width: 440px;
     border-radius: 24px;
     animation: popup-in 0.45s var(--ease-spring);
   }
+
+  /* A centred dialog has nothing to swipe; it closes on the backdrop or Escape */
+  .card-handle { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

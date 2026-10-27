@@ -1,6 +1,6 @@
 # Picker and tour
 
-🎲 今晚吃什麼？ (food) / 去哪裡玩？ (sights) spins a slot machine through the currently filtered spots, lands on one with an emoji burst, then flies to it and opens its popup. ▶ 美食巡禮 / 景點巡禮 flies through every filtered spot in turn with a progress bar, and stops on ■ 停止巡禮 or when the map is touched.
+🎲 今晚吃什麼？ (food) / 去哪裡玩？ (sights) spins a slot machine through the currently filtered spots, lands on one with an emoji burst, then flies to it and opens its popup. ▶ 巡禮 flies through every filtered spot in turn with a progress bar (美食巡禮 / 景點巡禮 1/N), and stops on ■ 停止巡禮 or when the map is touched.
 
 ## Sub-features
 
@@ -12,7 +12,7 @@
 ## How to get to it (user POV)
 
 - Tap 🎲 今晚吃什麼？ / 去哪裡玩？ in the sheet.
-- Tap ▶ 美食巡禮 / 景點巡禮; tap ■ 停止巡禮 or drag the map to stop.
+- Tap ▶ 巡禮; tap ■ 停止巡禮 or drag the map to stop.
 
 ## Driving it with drive.mjs
 

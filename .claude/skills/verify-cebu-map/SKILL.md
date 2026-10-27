@@ -70,7 +70,7 @@ Stable handles in this app (ids and data attributes, there are few ARIA names):
 - Popup `.maplibregl-popup .popup-content`, its `.maps-link` and `.share-btn`, close `.maplibregl-popup-close-button`
 - Markers `.marker` (`.is-hidden`, `.is-active`), tools `#view-toggle`, `#reset-view`, `#hotel-btn`
 - Picker `#roulette-btn`, overlay `#roulette` (`.won` when it lands), `#roulette-name`; tour `#tour-btn`, `#tour-bar`, `#tour-progress`, `#tour-stop`
-- Tabs `.tab[data-tab=list-panel|info-panel]`; converter `#php-input`, `#jpy-input`, `.quick-amounts button[data-php]`, `#rate-info`; hotel card `#hotel-card` (opened by map `#hotel-btn` or the actions row `#quick-hotel`), `#hotel-close`; toast `#toast.show`
+- Tabs `.tab[data-tab=list-panel|info-panel]`; converter card `#fx-card` (opened by the actions row `#quick-fx`) with `#php-input`, `#jpy-input`, `.quick-amounts button[data-php]`, `#rate-info`; hotel card `#hotel-card` (opened by map `#hotel-btn` or the actions row `#quick-hotel`); both cards close by `swipe '.sheet-card' down`, the backdrop or Escape (no × button); toast `#toast.show`
 - Place ids are in `src/data.ts` (e.g. `aa-bbq`, `pungko-fuente`, `temple-of-leah`)
 
 For any UI change, run the layout audit in every state you touch, on both viewports:
