@@ -1,4 +1,4 @@
-# 宿務在地美食・景點 3D 地圖
+# 宿務美食景點
 
 Interactive 3D map of authentic local eateries and sightseeing spots in Cebu, Philippines, for a 42-person Japanese company trip (Oct 28 - Nov 1, 2026) staying at J Park Island Resort & Waterpark, Mactan.
 

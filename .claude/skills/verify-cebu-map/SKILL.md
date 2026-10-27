@@ -1,6 +1,6 @@
 ---
 name: verify-cebu-map
-description: Drive the real Cebu food & sightseeing map (宿務在地美食・景點 3D 地圖, a Vite + MapLibre web app) in an isolated headless Chrome at phone size and capture proof. Use to confirm a UI change works the way a colleague on a phone would use it — selecting spots, modes and filters, the 🎲 picker and tour, share links, the converter and hotel card — or to reproduce a reported bug before fixing it.
+description: Drive the real Cebu food & sightseeing map (宿務美食景點, a Vite + MapLibre web app) in an isolated headless Chrome at phone size and capture proof. Use to confirm a UI change works the way a colleague on a phone would use it — selecting spots, modes and filters, the 🎲 picker and tour, share links, the converter and hotel card — or to reproduce a reported bug before fixing it.
 ---
 
 # Verify the Cebu map
@@ -72,6 +72,15 @@ Stable handles in this app (ids and data attributes, there are few ARIA names):
 - Picker `#roulette-btn`, overlay `#roulette` (`.won` when it lands), `#roulette-name`; tour `#tour-btn`, `#tour-bar`, `#tour-progress`, `#tour-stop`
 - Tabs `.tab[data-tab=list-panel|info-panel]`; converter `#php-input`, `#jpy-input`, `.quick-amounts button[data-php]`, `#rate-info`; hotel card `#hotel-card`, `#hotel-close`; toast `#toast.show`
 - Place ids are in `src/data.ts` (e.g. `aa-bbq`, `larsian`, `temple-of-leah`)
+
+For any UI change, run the layout audit in every state you touch, on both viewports:
+
+```bash
+A="$(cat $S/ui-audit.js)"
+RUN_ID=r1 $S/drive.mjs open '/cebu-local-food-map/?skip-intro' waitfor "document.body.classList.contains('ready')" 30000 settle eval "$A"
+```
+
+It returns `[]` when clean, else lines for text not in Noto Sans TC (`font`), text within 8px of a button's side (`edge`), phone tap targets under 44px including any `::before` hit slop (`tap`), and text overflowing its box (`over`). It only sees what is on screen, so open the popup, cards, overlays and each scroll position of the 資訊 tab before calling it. It can't judge looks: review the screenshots too.
 
 Recipes per feature are in [`features/`](features/README.md). Use the matching file; a proof through one convenient entry point is incomplete when the file lists others.
 

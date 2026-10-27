@@ -1,6 +1,7 @@
-import './style.css';
 import * as maplibregl from 'maplibre-gl';
+// MapLibre's stylesheet first, so style.css overrides it where both style the same element
 import 'maplibre-gl/dist/maplibre-gl.css';
+import './style.css';
 // MapLibre finds its worker relative to its own module URL, which neither Vite's
 // dev prebundle nor the production build preserves, so ship it as an asset.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
@@ -71,7 +72,8 @@ maplibregl.setWorkerUrl(workerUrl);
 // State
 let map: maplibregl.Map;
 const markers = new Map<string, maplibregl.Marker>();
-const popup = new maplibregl.Popup({ offset: [0, -46], maxWidth: '300px', focusAfterOpen: false });
+// 320px fits a 390px phone with the map's 16px gutters on both sides; buttons need the width
+const popup = new maplibregl.Popup({ offset: [0, -48], maxWidth: 'min(320px, calc(100vw - 32px))', focusAfterOpen: false });
 let mode: Mode = 'food';
 let activeArea: Area | 'all' = 'all';
 const activeCategories = new Set<Category>();
@@ -440,7 +442,7 @@ async function sharePlace(place: Place) {
   const url = shareUrl(location.href, place.id);
   if (navigator.share) {
     try {
-      await navigator.share({ title: place.name, text: `${place.name}｜宿務在地地圖`, url });
+      await navigator.share({ title: place.name, text: `${place.name}｜宿務美食景點`, url });
       return;
     } catch (error) {
       if ((error as DOMException).name === 'AbortError') return; // user closed the share sheet

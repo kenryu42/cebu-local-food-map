@@ -1,6 +1,6 @@
 # First visit and intro
 
-On a phone's first visit the map flies from Japan down to Cebu on a globe while the title 宿務 在地 美食 animates in; tapping skips it. It plays once per phone, then later visits land straight on an overview that frames every spot. Reduced motion, Data Saver, 2G, `?skip-intro` and shared spot links skip it, and only a flight that actually played marks it as seen.
+On a phone's first visit the map flies from Japan down to Cebu on a globe while the title 宿務 美食 景點 animates in; tapping skips it. It plays once per phone, then later visits land straight on an overview that frames every spot. Reduced motion, Data Saver, 2G, `?skip-intro` and shared spot links skip it, and only a flight that actually played marks it as seen.
 
 ## Sub-features
 
