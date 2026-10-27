@@ -5,7 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 // dev prebundle nor the production build preserves, so ship it as an asset.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import type { Feature, LineString } from 'geojson';
-import { places, glossary, phrases, streetFoodTips, sources, type Place, type Category, type Area } from './data';
+import { places, glossary, phraseGroups, streetFoodTips, sources, type Place, type Category, type Area } from './data';
 import { openStatus, formatPrice, shareUrl, placeIdFromHash, distanceKm, sortByDistance, type OpenStatus } from './trip';
 
 const CATEGORY_META: Record<Category, { label: string; emoji: string; color: string }> = {
@@ -914,9 +914,15 @@ function initHotelCard() {
 // ---------- Info panel & tabs ----------
 
 function initInfoPanel() {
-  $('#phrases-content').innerHTML = phrases.map(item => `
-    <div class="phrase"><strong>${item.phrase}</strong><span>${item.meaning}</span></div>
+  $('#phrases-content').innerHTML = phraseGroups.map(group => `
+    <h5 class="phrase-group">${group.title}</h5>
+    ${group.phrases.map(item => `
+      <button class="phrase" data-phrase-id="${item.id}" aria-label="播放 ${item.phrase} 的發音">
+        <strong><span class="speaker" aria-hidden="true">🔊</span>${item.phrase}</strong><span>${item.meaning}</span>
+      </button>
+    `).join('')}
   `).join('');
+  initPhraseAudio();
 
   $('#glossary-content').innerHTML = glossary.map(item => `
     <div class="glossary-item"><strong>${item.term}</strong><span>${item.description}</span></div>
@@ -929,6 +935,31 @@ function initInfoPanel() {
       ${source.title} <span class="source-site">${source.site} ↗</span>
     </a>
   `).join('');
+}
+
+// One player for all phrases: a new tap stops the previous clip, a repeat tap replays from the start
+function initPhraseAudio() {
+  const player = new Audio();
+  let playing: HTMLElement | null = null;
+  const stop = () => {
+    playing?.classList.remove('playing');
+    playing = null;
+  };
+  player.addEventListener('ended', stop);
+  player.addEventListener('error', () => {
+    stop();
+    toast('音檔載入失敗，請檢查網路');
+  });
+
+  $('#phrases-content').addEventListener('click', e => {
+    const row = (e.target as HTMLElement).closest<HTMLElement>('.phrase');
+    if (!row) return;
+    stop();
+    player.src = `${import.meta.env.BASE_URL}audio/phrases/${row.dataset.phraseId}.mp3`;
+    playing = row;
+    row.classList.add('playing');
+    player.play().catch(() => stop());
+  });
 }
 
 function initTabs() {

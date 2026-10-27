@@ -20,6 +20,12 @@ export type Category =
   | 'lodging' | 'airport';
 export type Area = 'mactan' | 'cebu-city' | 'landmark';
 
+export interface Phrase {
+  id: string; // also the audio file name
+  phrase: string;
+  meaning: string;
+}
+
 export interface Place {
   id: string;
   name: string;
@@ -373,14 +379,60 @@ export const glossary = [
   { term: 'Puto maya + sikwate', description: '糯米飯配濃熱巧克力，當地早餐' }
 ];
 
-export const phrases = [
-  { phrase: 'Salamat', meaning: '謝謝' },
-  { phrase: 'Maayong buntag', meaning: '早安' },
-  { phrase: 'Pila ni?', meaning: '這個多少錢？' },
-  { phrase: 'Lami kaayo!', meaning: '超好吃！' },
-  { phrase: 'Palihug', meaning: '麻煩你／拜託' },
-  { phrase: 'Asa ang CR?', meaning: '廁所在哪裡？' },
-  { phrase: 'Oo / Dili', meaning: '是／不是' }
+// Cebuano (Bisaya), the language people speak in Cebu. Audio for each id is pre-generated into
+// public/audio/phrases/<id>.mp3 by scripts/generate-phrase-audio.ts.
+export const phraseGroups: { title: string; phrases: Phrase[] }[] = [
+  {
+    title: '打招呼',
+    phrases: [
+      { id: 'maayong-buntag', phrase: 'Maayong buntag', meaning: '早安' },
+      { id: 'maayong-hapon', phrase: 'Maayong hapon', meaning: '午安' },
+      { id: 'maayong-gabii', phrase: 'Maayong gabii', meaning: '晚上好' },
+      { id: 'kumusta', phrase: 'Kumusta ka?', meaning: '你好嗎？' },
+      { id: 'salamat', phrase: 'Salamat', meaning: '謝謝' },
+      { id: 'daghang-salamat', phrase: 'Daghang salamat', meaning: '非常感謝' },
+      { id: 'walay-sapayan', phrase: 'Walay sapayan', meaning: '不客氣' }
+    ]
+  },
+  {
+    title: '吃飯點餐',
+    phrases: [
+      { id: 'lami-kaayo', phrase: 'Lami kaayo!', meaning: '超好吃！' },
+      { id: 'usa-pa', phrase: 'Usa pa, palihug', meaning: '請再來一份' },
+      { id: 'tubig', phrase: 'Tubig, palihug', meaning: '請給我水' },
+      { id: 'dili-halang', phrase: 'Dili halang', meaning: '不要辣' },
+      { id: 'busog', phrase: 'Busog na ko', meaning: '我吃飽了' },
+      { id: 'pila-tanan', phrase: 'Pila tanan?', meaning: '總共多少錢？' }
+    ]
+  },
+  {
+    title: '購物殺價',
+    phrases: [
+      { id: 'pila-ni', phrase: 'Pila ni?', meaning: '這個多少錢？' },
+      { id: 'mahal-kaayo', phrase: 'Mahal kaayo!', meaning: '太貴了！' },
+      { id: 'mahangyo', phrase: 'Pwede mahangyo?', meaning: '可以算便宜一點嗎？' },
+      { id: 'palihug', phrase: 'Palihug', meaning: '麻煩你／拜託' }
+    ]
+  },
+  {
+    title: '問路搭車',
+    phrases: [
+      { id: 'asa-cr', phrase: 'Asa ang CR?', meaning: '廁所在哪裡？' },
+      { id: 'para', phrase: 'Para!', meaning: '停車！（搭吉普尼下車時喊）' },
+      { id: 'diri-lang', phrase: 'Diri lang', meaning: '在這裡停就好' },
+      { id: 'liko-tuo', phrase: 'Liko sa tuo', meaning: '右轉' },
+      { id: 'liko-wala', phrase: 'Liko sa wala', meaning: '左轉' }
+    ]
+  },
+  {
+    title: '實用短句',
+    phrases: [
+      { id: 'oo', phrase: 'Oo', meaning: '是／好' },
+      { id: 'dili', phrase: 'Dili', meaning: '不是／不要' },
+      { id: 'wala-kasabot', phrase: 'Wala ko kasabot', meaning: '我聽不懂' },
+      { id: 'hinay-hinay', phrase: 'Hinay-hinay lang', meaning: '慢一點' }
+    ]
+  }
 ];
 
 export const streetFoodTips = [

@@ -1,0 +1,32 @@
+{
+  "voice": "D8TuWQEXN52BAdnzubRD",
+  "model": "eleven_v4",
+  "clips": {
+    "maayong-buntag": "Maayong buntag",
+    "maayong-hapon": "Maayong hapon",
+    "maayong-gabii": "Maayong gabii",
+    "kumusta": "Kumusta ka?",
+    "salamat": "Salamat",
+    "daghang-salamat": "Daghang salamat",
+    "walay-sapayan": "Walay sapayan",
+    "lami-kaayo": "Lami kaayo!",
+    "usa-pa": "Usa pa, palihug",
+    "tubig": "Tubig, palihug",
+    "dili-halang": "Dili halang",
+    "busog": "Busog na ko",
+    "pila-tanan": "Pila tanan?",
+    "pila-ni": "Pila ni?",
+    "mahal-kaayo": "Mahal kaayo!",
+    "mahangyo": "Pwede mahangyo?",
+    "palihug": "Palihug",
+    "asa-cr": "Asa ang CR?",
+    "para": "Para!",
+    "diri-lang": "Diri lang",
+    "liko-tuo": "Liko sa tuo",
+    "liko-wala": "Liko sa wala",
+    "oo": "Oo",
+    "dili": "Dili",
+    "wala-kasabot": "Wala ko kasabot",
+    "hinay-hinay": "Hinay-hinay lang"
+  }
+}

@@ -1063,18 +1063,67 @@ body.ready .map-tools {
 
 /* ---------- Cebuano phrases ---------- */
 
-.phrase {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 0;
-  font-size: 14px;
-  border-bottom: 1px dashed var(--line);
+.phrase-group {
+  margin: 14px 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
 }
 
-.phrase:last-child { border-bottom: none; }
-.phrase strong { color: var(--sea); }
-.phrase span { color: var(--ink-soft); }
+.phrase-group:first-child { margin-top: 0; }
+
+/* Each phrase is a tap target that plays its pronunciation */
+.phrase {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  margin: 0 -8px;
+  padding: 6px 8px;
+  width: calc(100% + 16px);
+  border-radius: 12px;
+  font-size: 14.5px;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.phrase:active { background: var(--sand); }
+
+.phrase strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--sea);
+}
+
+.phrase > span {
+  flex-shrink: 0;
+  color: var(--ink-soft);
+}
+
+.speaker {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 14px;
+  background: color-mix(in srgb, var(--sea) 14%, #fff);
+}
+
+.phrase.playing { background: color-mix(in srgb, var(--sea) 10%, #fff); }
+
+.phrase.playing .speaker {
+  color: #fff;
+  background: var(--sea);
+  animation: speak 0.7s ease-in-out infinite;
+}
+
+@keyframes speak {
+  50% { transform: scale(1.15); box-shadow: 0 0 0 6px color-mix(in srgb, var(--sea) 20%, transparent); }
+}
 
 /* ---------- Hotel & emergency card ---------- */
 
@@ -1259,6 +1308,7 @@ body.ready .map-tools {
   .list-item:hover, .list-item.is-hover { transform: translateX(4px); }
   .tool:hover { transform: scale(1.06); }
   .source-link:hover { color: var(--accent); }
+  .phrase:hover { background: var(--sand); }
 }
 
 /* ---------- Desktop: floating side panel ---------- */

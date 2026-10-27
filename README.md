@@ -31,7 +31,7 @@ Interactive 3D map of authentic local eateries and sightseeing spots in Cebu, Ph
   - 🔗 Share a spot: links (`#place=<id>`) open straight to that spot
   - 🏨 Hotel card to show drivers, plus 911 and emergency lines for the Chinese Consulate General in Cebu, the Taipei Economic and Cultural Office (Manila), and the Consulate General of Japan in Cebu
   - ₱ ⇄ ¥ converter (live rate, cached for offline use)
-  - Cebuano phrases
+  - 26 Cebuano phrases by situation; tap one to hear it (pre-generated ElevenLabs audio in `public/audio/phrases/`)
   - Local dish glossary
   - Street food safety tips
   - Undas holiday traffic warning
@@ -135,6 +135,19 @@ These restaurants are not in the OSM database. Coordinates use nearby landmarks 
 - Way Tugpahay Siomai: 10.295, 123.895 (Tisa/Katipunan area)
 
 **Note:** Approximate coordinates are flagged with ⚠️ in popups. Use the Google Maps link for turn-by-turn navigation.
+
+## Phrase audio
+
+The phrase clips are generated once and committed, so the site needs no API key at runtime.
+After adding or changing a phrase in `src/data.ts`:
+
+```bash
+ELEVENLABS_API_KEY=... node scripts/generate-phrase-audio.ts
+```
+
+It only generates new or changed phrases, checks each clip decodes, prints what speech-to-text heard
+(short clips are often heard in another language, so listen to any it flags), and deletes the
+generations from ElevenLabs afterwards. Needs `ffprobe`.
 
 ## Tests
 
