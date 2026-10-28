@@ -452,9 +452,13 @@ function createPopupContent(place: Place): string {
 }
 
 // ‹ › step through the list as shown (filters and sort applied), wrapping at the ends, so
-// people can compare spots without reopening the sheet
+// people can compare spots without reopening the sheet. Landmarks (hotel, airport) are
+// skipped, and their own cards get no ‹ ›
 function placeNav(place: Place): string {
-  const order = [...document.querySelectorAll<HTMLElement>('#place-list .list-item')].map(item => item.dataset.id!);
+  const spotIds = new Set(places.filter(isSpot).map(p => p.id));
+  const order = [...document.querySelectorAll<HTMLElement>('#place-list .list-item')]
+    .map(item => item.dataset.id!)
+    .filter(id => spotIds.has(id));
   const index = order.indexOf(place.id);
   if (index < 0 || order.length < 2) return '';
   const at = (step: number) => order[(index + step + order.length) % order.length];
