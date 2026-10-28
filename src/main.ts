@@ -1058,11 +1058,20 @@ function initPhraseAudio() {
 function initTabs() {
   const tabs = document.querySelectorAll('.tab');
   const panels = document.querySelectorAll('.tab-panel');
+  // Both tabs scroll in the one panel body, so each keeps its own position across switches
+  const body = $('.panel-body');
+  const scrollOf = new Map<string, number>();
+  let current = document.querySelector('.tab.active')!.getAttribute('data-tab')!;
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
+      const next = tab.getAttribute('data-tab')!;
+      if (next === current) return;
+      scrollOf.set(current, body.scrollTop);
+      current = next;
       tabs.forEach(t => t.classList.toggle('active', t === tab));
-      panels.forEach(p => p.classList.toggle('active', p.id === tab.getAttribute('data-tab')));
+      panels.forEach(p => p.classList.toggle('active', p.id === next));
+      body.scrollTop = scrollOf.get(next) ?? 0;
     });
   });
 }
