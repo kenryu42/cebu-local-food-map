@@ -87,7 +87,11 @@ const markers = new Map<string, maplibregl.Marker>();
 // 320px fits a 390px phone with the map's 16px gutters on both sides; buttons need the width
 // Subpixel positioning: while the camera orbits, the pin's projected point hovers on a half
 // pixel, and rounding it made the popup and pin flicker 1px back and forth every frame
-const popup = new maplibregl.Popup({ offset: [0, -48], maxWidth: 'min(320px, calc(100vw - 32px))', focusAfterOpen: false, subpixelPositioning: true });
+// Always above the pin: MapLibre flips a card that doesn't fit below the pin, which on a phone
+// is under the bottom sheet. selectPlace frames the pin low enough for the card instead.
+const POPUP_OFFSET = 48;
+const POPUP_MAX_WIDTH = 'min(320px, calc(100vw - 32px))';
+const popup = new maplibregl.Popup({ anchor: 'bottom', offset: [0, -POPUP_OFFSET], maxWidth: POPUP_MAX_WIDTH, focusAfterOpen: false, subpixelPositioning: true });
 let mode: Mode = 'food';
 let activeArea: Area | 'all' = 'all';
 const activeCategories = new Set<Category>();
@@ -149,7 +153,7 @@ const keepWordsWhole = (name: string) => name
   .map((part, i) => i % 2 ? nobr(part) : part.replace(/\S+-\S+|[\u4e00-\u9fff]+/g, nobr))
   .join('');
 
-function cameraPadding(): maplibregl.PaddingOptions {
+function cameraPadding(): Required<maplibregl.PaddingOptions> {
   if (mobileQuery.matches) {
     // A full sheet covers the map, so always frame it for the collapsed sheet
     return { top: 90, bottom: SHEET_PEEK + 16, left: 24, right: 24 };
@@ -464,6 +468,31 @@ function placeNav(place: Place): string {
   `;
 }
 
+// Height of the place's card (tip included), laid out off screen at the popup's width
+function measurePopup(place: Place): number {
+  const probe = document.createElement('div');
+  probe.className = 'maplibregl-popup-content';
+  probe.style.cssText = `position:absolute;left:0;top:0;visibility:hidden;animation:none;max-width:${POPUP_MAX_WIDTH}`;
+  probe.innerHTML = createPopupContent(place);
+  map.getContainer().append(probe);
+  const height = probe.offsetHeight + 10; // + the popup's tip
+  probe.remove();
+  return height;
+}
+
+// Camera padding that puts the pin where its whole card fits between the top of the screen
+// and the sheet (phone) or the window's bottom edge (desktop)
+function placePadding(place: Place): maplibregl.PaddingOptions {
+  const base = mobileQuery.matches ? { ...cameraPadding(), top: 330 } : cameraPadding();
+  const height = map.getContainer().clientHeight;
+  const visibleBottom = height - base.bottom;
+  const pinY = (base.top + visibleBottom) / 2;
+  const neededY = Math.min(16 + measurePopup(place) + POPUP_OFFSET, visibleBottom - 16);
+  if (neededY <= pinY) return base;
+  // The pin lands at the centre of the padded area, so move the top edge to centre it there
+  return { ...base, top: Math.max(0, 2 * neededY - visibleBottom) };
+}
+
 function showPopup(place: Place) {
   popup.setLngLat([place.lng, place.lat]).setHTML(createPopupContent(place)).addTo(map);
   popup.getElement().querySelector('.share-btn')!.addEventListener('click', () => sharePlace(place));
@@ -517,8 +546,8 @@ async function selectPlace(id: string) {
     pitch: is3D ? 62 : 0,
     // Keep the heading: turning on the way in read as the map spinning before the card showed
     bearing: is3D ? map.getBearing() : 0,
-    // Extra headroom on phones so the popup above the pin clears the map buttons
-    padding: mobileQuery.matches ? { ...cameraPadding(), top: 330 } : cameraPadding(),
+    // Headroom above the pin so its card shows in full
+    padding: placePadding(place),
     // The card waits for the landing, so keep the flight short
     duration: 1200,
     curve: 1.4,

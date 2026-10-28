@@ -845,6 +845,9 @@ body.ready .map-tools {
   border-radius: 18px;
   box-shadow: var(--shadow-lg);
   min-width: 240px;
+  /* A very long card on a short screen scrolls rather than running under the sheet */
+  max-height: calc(100dvh - var(--sheet-peek) - 106px);
+  overflow-y: auto;
   animation: popup-in 0.45s var(--ease-spring);
 }
 
